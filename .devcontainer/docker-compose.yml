@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.11
+    volumes:
+      - ..:/workspace:cached
+    command: sleep infinity
+    network_mode: bridge
+
+  db:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    network_mode: bridge
