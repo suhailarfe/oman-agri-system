@@ -22,7 +22,7 @@ export default function AboutSection() {
       </FadeIn>
       <div className="flex flex-col items-center gap-16 sm:gap-20 md:gap-24 mt-10 sm:mt-14 md:mt-16">
         <AnimatedText
-          text="انطلاقاً من رؤية عُمان 2040، نعمل على دعم المزارع والواحات العُمانية وتعزيز الاكتفاء الذاتي. نؤمن بأن الزراعة المستدامة هي مفتاح مستقبل مشرق لعُمان. معاً نبني أرض الخير والنماء."
+          text="انطلاقاً من رؤية عُمان 2040، نعمل على استغلال الأراضي الزراعية الحكومية غير المستغلة في مناطق النجد والباطنة والظاهرة والمنطقة الوسطى. باستخدام حلول المياه المبتكرة والبذور الطبيعية غير المعدلة جينياً، نبني منظومة أمن غذائي وطني مستدام."
           className="text-[#D7E2EA] font-medium text-center leading-relaxed max-w-[560px]"
           style={{ fontSize: "clamp(1rem, 2vw, 1.35rem)" }}
         />

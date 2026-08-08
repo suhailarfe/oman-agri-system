@@ -3,9 +3,9 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import LiveProjectButton from "./LiveProjectButton";
 
 const PROJECTS = [
-  { num: "01", category: "مشروع وطني", name: "واحة الجبل الأخضر", col1Img1: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1599940824399-b0e38efb7d73?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&q=80" },
-  { num: "02", category: "مبادرة أهلية", name: "مزرعة الباطنة النموذجية", col1Img1: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80" },
-  { num: "03", category: "شراكة استراتيجية", name: "واحة ثمريت", col1Img1: "https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?w=800&q=80" },
+  { num: "01", category: "منطقة زراعية واعدة", name: "النجد — ظفار", col1Img1: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1599940824399-b0e38efb7d73?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800&q=80", desc: "40 ألف كم² — قمح، نخيل، أعلاف، لبان. خزان جوفي ضخم + تحلية شمسية" },
+  { num: "02", category: "منطقة زراعية واعدة", name: "سهل الباطنة", col1Img1: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800&q=80", desc: "خضروات، حمضيات، مانجو، نخيل — مياه صرف معالجة + تحلية" },
+  { num: "03", category: "منطقة زراعية واعدة", name: "محافظة الظاهرة", col1Img1: "https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=800&q=80", col1Img2: "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=800&q=80", col2Img: "https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?w=800&q=80", desc: "نخيل، محاصيل حقلية، نباتات طبية — زراعة مائية وبيوت محمية" },
 ];
 
 function ProjectCard({ project, index, totalCards }: { project: typeof PROJECTS[0]; index: number; totalCards: number }) {
@@ -23,6 +23,7 @@ function ProjectCard({ project, index, totalCards }: { project: typeof PROJECTS[
             <div className="flex flex-col">
               <span className="text-[#D7E2EA]/60 font-light uppercase text-sm tracking-wider">{project.category}</span>
               <h3 className="text-[#D7E2EA] font-medium uppercase text-lg sm:text-xl md:text-2xl">{project.name}</h3>
+              <p className="text-[#D7E2EA]/50 text-xs sm:text-sm mt-1 max-w-xs leading-relaxed">{project.desc}</p>
             </div>
           </div>
           <LiveProjectButton />
@@ -44,7 +45,7 @@ function ProjectCard({ project, index, totalCards }: { project: typeof PROJECTS[
 export default function ProjectsSection() {
   return (
     <section className="bg-[#0C0C0C] rounded-t-[40px] sm:rounded-t-[50px] md:rounded-t-[60px] -mt-10 sm:-mt-12 md:-mt-14 relative z-10 px-5 sm:px-8 md:px-10 py-20 sm:py-24 md:py-32">
-      <h2 className="hero-heading font-black uppercase text-center mb-16 sm:mb-20 md:mb-28" style={{ fontSize: "clamp(3rem, 12vw, 160px)" }}>المشاريع</h2>
+      <h2 className="hero-heading font-black uppercase text-center mb-16 sm:mb-20 md:mb-28" style={{ fontSize: "clamp(3rem, 12vw, 160px)" }}>المناطق</h2>
       <div className="max-w-6xl mx-auto">
         {PROJECTS.map((project, i) => <ProjectCard key={i} project={project} index={i} totalCards={PROJECTS.length} />)}
       </div>
