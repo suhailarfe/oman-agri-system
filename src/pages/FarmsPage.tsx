@@ -1,0 +1,16 @@
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
+import { Badge } from "../components/ui/badge"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion"
+import { farms, waterSolutions, seedSources } from "../data/farms"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+
+const v: Record<string, "default"|"secondary"|"outline"> = { "منتج":"default", "قيد الإنشاء":"secondary", "قيد التخطيط":"outline", "نشط":"default", "تجريبي":"secondary" }
+
+export default function FarmsPage() {
+  return (<div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">المزارع والمحاصيل</h1><p className="text-muted-foreground">إدارة المزارع، حلول المياه، ومصادر البذور الطبيعية</p></div>
+  <Tabs defaultValue="farms"><TabsList className="mb-4"><TabsTrigger value="farms">المزارع</TabsTrigger><TabsTrigger value="water">حلول المياه</TabsTrigger><TabsTrigger value="seeds">مصادر البذور</TabsTrigger></TabsList>
+  <TabsContent value="farms"><Card><CardHeader><CardTitle>قائمة المزارع</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المزرعة</TableHead><TableHead>المنطقة</TableHead><TableHead>المساحة</TableHead><TableHead>نظام الري</TableHead><TableHead>المحاصيل</TableHead><TableHead>استهلاك الماء</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{farms.map(f=>(<TableRow key={f.id}><TableCell className="font-medium">{f.name}</TableCell><TableCell>{f.regionName}</TableCell><TableCell>{f.areaHa} هكتار</TableCell><TableCell>{f.irrigationSystem}</TableCell><TableCell>{f.crops}</TableCell><TableCell>{f.waterConsumptionDaily} م³/يوم</TableCell><TableCell><Badge variant={v[f.status]}>{f.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
+  <TabsContent value="water"><Card><CardHeader><CardTitle>حلول المياه المبتكرة</CardTitle></CardHeader><CardContent><Accordion>{waterSolutions.map((ws,i)=>(<AccordionItem key={i} value={`w-${i}`}><AccordionTrigger className="text-right"><div className="flex items-center gap-3"><span>{ws.name}</span><Badge variant={v[ws.status]}>{ws.status}</Badge></div></AccordionTrigger><AccordionContent className="space-y-2 text-sm text-muted-foreground"><p>التكلفة: <strong>{ws.cost}</strong></p><p>السعة: <strong>{ws.capacity}</strong></p></AccordionContent></AccordionItem>))}</Accordion></CardContent></Card></TabsContent>
+  <TabsContent value="seeds"><Card><CardHeader><CardTitle>مصادر البذور الطبيعية Non-GMO</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المصدر</TableHead><TableHead>النوع</TableHead><TableHead>السجلات</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{seedSources.map((s,i)=>(<TableRow key={i}><TableCell className="font-medium">{s.name}</TableCell><TableCell>{s.type}</TableCell><TableCell>{s.records}</TableCell><TableCell><Badge variant={v[s.status]}>{s.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent></Tabs></div>)
+}
