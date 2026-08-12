@@ -1,0 +1,3 @@
+const c: Record<string,string>={'نشط':'#0d7c3d','قيد التطوير':'#b8860b','مخطط':'#6b7280','منتج':'#0d7c3d','قيد الإنشاء':'#b8860b','قيد التخطيط':'#6b7280','تجريبي':'#3b82f6'}
+const b: Record<string,string>={'نشط':'#e6f4ea','قيد التطوير':'#fdf3d0','مخطط':'#f3f4f6','منتج':'#e6f4ea','قيد الإنشاء':'#fdf3d0','قيد التخطيط':'#f3f4f6','تجريبي':'#dbeafe'}
+export function StatusBadge({label}:{label:string}){return <span style={{color:c[label]||'#6b7280',background:b[label]||'#f3f4f6',padding:'2px 10px',borderRadius:20,fontSize:12,fontWeight:500,whiteSpace:'nowrap'}}>{label}</span>}
