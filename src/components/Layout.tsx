@@ -1,35 +1,4 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Map, Sprout, Droplets, DollarSign, Settings, BarChart3, Mail, Phone } from 'lucide-react'
-
-const navItems = [
-  { path:'/dashboard', label:'لوحة التحكم', icon:BarChart3 },
-  { path:'/regions', label:'المناطق', icon:Map },
-  { path:'/farms', label:'المزارع', icon:Sprout },
-  { path:'/water', label:'المياه', icon:Droplets },
-  { path:'/reports', label:'التقارير', icon:DollarSign },
-  { path:'/settings', label:'الإعدادات', icon:Settings },
-]
-
-export default function Layout() {
-  const loc = useLocation()
-  return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg)]">
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-3 shrink-0">
-            <img src="/logo2040.png" alt="رؤية عُمان 2040" className="h-10 w-10 rounded-lg object-contain bg-white" />
-            <div className="hidden sm:block"><div className="font-bold text-base text-gray-900 leading-tight">رؤية عُمان 2040</div><div className="text-xs text-gray-400">الأمن الغذائي والزراعي</div></div>
-          </Link>
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map(item => {
-              const active = loc.pathname.startsWith(item.path)
-              return <Link key={item.path} to={item.path} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${active?'bg-green-50 text-green-700':'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}><item.icon size={16} /> {item.label}</Link>
-            })}
-          </nav>
-        </div>
-      </header>
-      <main className="flex-1"><Outlet /></main>
-      <footer className="bg-white border-t border-gray-100 mt-auto"><div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4"><div className="flex items-center gap-3"><img src="/logo2040.png" alt="رؤية 2040" className="h-8 w-8 rounded object-contain" /><span className="text-sm text-gray-500">🇴🇲 سهيل عارف قائد أحمد الحكيمي</span></div><div className="flex items-center gap-6 text-sm text-gray-400"><span className="flex items-center gap-1.5"><Mail size={14} className="text-green-600" /> suhailarfe@gmail.com</span><span className="flex items-center gap-1.5"><Phone size={14} className="text-green-600" /> 00967736986271</span></div></div></footer>
-    </div>
-  )
-}
+import { BarChart3, Map, Sprout, Droplets, DollarSign, Settings, Mail, Phone, Leaf } from 'lucide-react'
+const nav=[{p:'/dashboard',l:'لوحة التحكم',i:BarChart3},{p:'/regions',l:'المناطق',i:Map},{p:'/farms',l:'المزارع',i:Sprout},{p:'/water',l:'المياه',i:Droplets},{p:'/reports',l:'التقارير',i:DollarSign},{p:'/settings',l:'الإعدادات',i:Settings}]
+export default function Layout(){const loc=useLocation();const isA=(p:string)=>loc.pathname.startsWith(p);return <div style={{minHeight:'100vh',display:'flex',flexDirection:'column',background:'var(--warm-bg)'}}><header style={{position:'sticky',top:0,zIndex:50,background:'rgba(255,255,255,0.95)',backdropFilter:'blur(12px)',borderBottom:'1px solid var(--border)',boxShadow:'0 1px 8px rgba(0,0,0,0.04)'}}><div style={{maxWidth:1280,margin:'0 auto',padding:'0 24px',height:68,display:'flex',alignItems:'center',justifyContent:'space-between'}}><Link to="/dashboard" style={{display:'flex',alignItems:'center',gap:10}}><img src="/logo2040.png" alt="رؤية 2040" style={{height:40,width:40,borderRadius:8,objectFit:'contain'}}/><div className="hidden sm:block"><div style={{fontWeight:700,fontSize:16,color:'var(--teal)'}}>رؤية عُمان 2040</div><div style={{fontSize:11,color:'var(--text-muted)'}}>وحدة متابعة التنفيذ</div></div></Link><nav style={{display:'none',gap:2}} className="hidden md:flex">{nav.map(n=><Link key={n.p} to={n.p} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:isA(n.p)?600:400,background:isA(n.p)?'var(--teal-light)':'transparent',color:isA(n.p)?'var(--teal)':'var(--text-secondary)',transition:'all .15s'}}><n.i size={15}/>{n.l}</Link>)}</nav></div></header><main style={{flex:1}}><Outlet/></main><footer style={{background:'var(--teal-dark)',color:'white',marginTop:'auto'}}><div style={{maxWidth:1280,margin:'0 auto',padding:'32px 24px',display:'flex',flexDirection:'column',gap:16,alignItems:'center'}}><div style={{display:'flex',alignItems:'center',gap:10}}><img src="/logo2040.png" style={{height:36,width:36,borderRadius:8,objectFit:'contain',background:'white'}}/><div><div style={{fontWeight:700}}>رؤية عُمان 2040</div><div style={{fontSize:12,opacity:0.7}}>الأمن الغذائي والزراعي</div></div></div><div style={{display:'flex',gap:32,flexWrap:'wrap',justifyContent:'center',fontSize:13,opacity:0.8}}><span style={{display:'flex',alignItems:'center',gap:6}}><Mail size={14}/>suhailarfe@gmail.com</span><span style={{display:'flex',alignItems:'center',gap:6}}><Phone size={14}/>00967736986271</span></div><div style={{fontSize:12,opacity:0.6,textAlign:'center'}}>🇴🇲 جميع الحقوق محفوظة © سهيل عارف قائد أحمد الحكيمي — 2025/2026م</div></div></footer></div>}
