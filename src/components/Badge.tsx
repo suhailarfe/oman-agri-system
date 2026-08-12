@@ -1,0 +1,1 @@
+import{SC,SB}from'../data/all';export function Badge({label}:{label:string}){return <span className="pill" style={{color:SC[label]||'var(--text3)',background:SB[label]||'#f3f4f6'}}>{label}</span>}
