@@ -1,0 +1,9 @@
+export interface Region { id: number; name: string; governorate: string; climateType: string; soilType: string; totalAreaHa: number; cultivatedAreaHa: number; status: string; waterSource: string; mainCrops: string }
+export const regions: Region[] = [
+  { id:1, name:'النجد', governorate:'ظفار', climateType:'شبه جاف', soilType:'رملية طمية', totalAreaHa:4000000, cultivatedAreaHa:25000, status:'نشط', waterSource:'خزان جوفي + تحلية', mainCrops:'القمح، النخيل، الأعلاف' },
+  { id:2, name:'سهل الباطنة', governorate:'شمال الباطنة', climateType:'حار ورطب', soilType:'رسوبية طينية', totalAreaHa:1200000, cultivatedAreaHa:45000, status:'نشط', waterSource:'جوفية + صرف معالج', mainCrops:'الخضروات، الحمضيات' },
+  { id:3, name:'محافظة الظاهرة', governorate:'الظاهرة', climateType:'صحراوي جاف', soilType:'رملية', totalAreaHa:3700000, cultivatedAreaHa:12000, status:'قيد التطوير', waterSource:'جوفية + زراعة مائية', mainCrops:'النخيل، المحاصيل الحقلية' },
+  { id:4, name:'المنطقة الوسطى', governorate:'الوسطى', climateType:'صحراوي جاف', soilType:'رملية مالحة', totalAreaHa:7950000, cultivatedAreaHa:5000, status:'مخطط', waterSource:'مياه قليلة الملوحة', mainCrops:'محاصيل ملحية، رعوية' },
+  { id:5, name:'الجبل الأخضر', governorate:'الداخلية', climateType:'معتدل', soilType:'جبلية خصبة', totalAreaHa:120000, cultivatedAreaHa:8000, status:'نشط', waterSource:'أمطار + أفلاج', mainCrops:'الرمان، الورد، الجوز' },
+]
+export const stats = { totalAreaHa:regions.reduce((s,r)=>s+r.totalAreaHa,0), totalCultivatedHa:regions.reduce((s,r)=>s+r.cultivatedAreaHa,0), activeRegions:regions.filter(r=>r.status==='نشط').length, totalInvestmentOMR:315000 }
