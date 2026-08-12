@@ -1,11 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { waterSolutions } from "../data/farms"
-import { Droplets, Sun, CloudRain, Waves, Sprout, Building2 } from "lucide-react"
-
-const icons: Record<number, any> = { 0: Sun, 1: Building2, 2: CloudRain, 3: Sprout, 4: Waves }
-const colors = ["from-amber-500/20", "from-blue-500/20", "from-cyan-500/20", "from-emerald-500/20", "from-indigo-500/20"]
-
-export default function WaterPage() {
-  return (<div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">حلول المياه</h1><p className="text-muted-foreground">6 حلول مبتكرة لتوفير المياه للري ضمن رؤية عُمان 2040</p></div>
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{waterSolutions.map((ws,i)=>{const Icon=icons[i]||Droplets;return(<Card key={i} className={`bg-gradient-to-b ${colors[i]} to-background border-border/50 hover:shadow-lg transition-shadow`}><CardHeader><div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-background/80"><Icon className="h-5 w-5 text-emerald-600" /></div><CardTitle className="text-base">{ws.name}</CardTitle></div></CardHeader><CardContent className="space-y-2 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">التكلفة</span><strong>{ws.cost}</strong></div><div className="flex justify-between"><span className="text-muted-foreground">السعة</span><strong>{ws.capacity}</strong></div><div className="flex justify-between"><span className="text-muted-foreground">الحالة</span><span className="px-2 py-0.5 rounded-full text-xs bg-emerald-600/10 text-emerald-600">{ws.status}</span></div></CardContent></Card>)})}</div></div>)
-}
+import { waterSolutions } from '../data/farms'
+import { StatusBadge } from '../components/StatusBadge'
+export default function WaterPage(){return <div style={{maxWidth:1280,margin:'0 auto',padding:'32px 24px',display:'flex',flexDirection:'column',gap:24}}>
+<div><h1 style={{fontSize:28,fontWeight:800,color:'var(--teal)'}}>💧 حلول المياه</h1><p style={{color:'var(--text-secondary)',marginTop:4}}>6 تقنيات مبتكرة للري ضمن رؤية عُمان 2040</p></div>
+<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))',gap:20}}>
+{waterSolutions.map((w,i)=><div key={i} className="card" style={{padding:28,display:'flex',flexDirection:'column',gap:16,borderTop:`4px solid var(--teal)`}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{width:52,height:52,borderRadius:14,background:'var(--teal-light)',display:'flex',alignItems:'center',justifyContent:'center'}}><w.icon size={24} color="var(--teal)"/></div><StatusBadge label={w.status}/></div><h3 style={{fontSize:18,fontWeight:700}}>{w.name}</h3><div style={{display:'flex',flexDirection:'column',gap:8,fontSize:14}}><div style={{display:'flex',justifyContent:'space-between'}}><span style={{color:'var(--text-muted)'}}>التكلفة</span><strong>{w.cost}</strong></div><div style={{display:'flex',justifyContent:'space-between'}}><span style={{color:'var(--text-muted)'}}>السعة</span><strong>{w.cap}</strong></div></div></div>)}
+</div></div>}

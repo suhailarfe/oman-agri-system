@@ -1,20 +1,19 @@
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Badge } from "../components/ui/badge"
-import { Input } from "../components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { regions } from "../data/regions"
-import { formatNumber } from "../lib/utils"
-import { Search } from "lucide-react"
+import { useState } from 'react'
+import { Search } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { regions } from '../data/regions'
+import { StatusBadge } from '../components/StatusBadge'
+const COLS=['var(--teal)','var(--gold)','var(--indigo)','var(--green)','var(--red)']
 
-const v: Record<string, "default"|"secondary"|"outline"> = { "نشط":"default", "قيد التطوير":"secondary", "مخطط":"outline" }
-
-export default function RegionsPage() {
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("الكل")
-  const filtered = regions.filter(r => (r.name.includes(search)||r.governorate.includes(search)||r.mainCrops.includes(search)) && (statusFilter==="الكل"||r.status===statusFilter))
-  return (<div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">المناطق الزراعية</h1><p className="text-muted-foreground">5 مناطق زراعية حكومية واعدة ضمن رؤية عُمان 2040</p></div>
-  <div className="flex gap-4"><div className="relative flex-1 max-w-sm"><Search className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="بحث..." value={search} onChange={e=>setSearch(e.target.value)} className="pr-9" /></div>
-  <Select value={statusFilter} onValueChange={(v)=>setStatusFilter(v||"الكل")}><SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="الكل">الكل</SelectItem><SelectItem value="نشط">نشط</SelectItem><SelectItem value="قيد التطوير">قيد التطوير</SelectItem><SelectItem value="مخطط">مخطط</SelectItem></SelectContent></Select></div>
-  <div className="grid gap-6 lg:grid-cols-2">{filtered.map(r=>(<Card key={r.id} className="border-border/50 hover:shadow-md transition-shadow"><CardHeader><div className="flex justify-between items-start"><div><CardTitle className="text-lg">{r.name}</CardTitle><p className="text-sm text-muted-foreground">{r.governorate}</p></div><Badge variant={v[r.status]}>{r.status}</Badge></div></CardHeader><CardContent className="space-y-3"><div className="grid grid-cols-2 gap-2 text-sm"><div><span className="text-muted-foreground">المساحة: </span><strong>{formatNumber(r.totalAreaHa)} هكتار</strong></div><div><span className="text-muted-foreground">المزروع: </span><strong>{formatNumber(r.cultivatedAreaHa)} هكتار</strong></div><div className="col-span-2"><span className="text-muted-foreground">المناخ: </span>{r.climateType}</div><div className="col-span-2"><span className="text-muted-foreground">التربة: </span>{r.soilType}</div><div className="col-span-2"><span className="text-muted-foreground">المياه: </span>{r.waterSource}</div><div className="col-span-2"><span className="text-muted-foreground">المحاصيل: </span><Badge variant="outline">{r.mainCrops}</Badge></div></div></CardContent></Card>))}</div></div>)
+export default function RegionsPage(){
+  const [s,setS]=useState('')
+  const [sf,setSf]=useState('الكل')
+  const [sel,setSel]=useState<number|null>(null)
+  const filtered=regions.filter(r=>(r.name.includes(s)||r.crops.includes(s))&&(sf==='الكل'||r.status===sf))
+  return <div style={{maxWidth:1280,margin:'0 auto',padding:'32px 24px',display:'flex',flexDirection:'column',gap:32}}>
+    <div><h1 style={{fontSize:28,fontWeight:800,color:'var(--teal)'}}>🗺️ المناطق الزراعية</h1><p style={{color:'var(--text-secondary)',marginTop:4}}>5 مناطق حكومية واعدة — رؤية عُمان 2040</p></div>
+    <div style={{display:'flex',gap:12,flexWrap:'wrap'}}><div style={{position:'relative',flex:'1 1 280px'}}><Search size={16} style={{position:'absolute',right:14,top:14,color:'var(--text-muted)'}}/><input placeholder="بحث عن منطقة أو محصول..." value={s} onChange={e=>setS(e.target.value)} style={{width:'100%',padding:'12px 40px 12px 16px',borderRadius:12,border:'1px solid var(--border)',fontSize:14,fontFamily:'Kanit',outline:'none',background:'var(--white)'}}/></div><select value={sf} onChange={e=>setSf(e.target.value)} style={{padding:'12px 20px',borderRadius:12,border:'1px solid var(--border)',fontSize:14,fontFamily:'Kanit',background:'var(--white)',minWidth:150}}><option value="الكل">كل الحالات</option><option value="نشط">نشط</option><option value="قيد التطوير">قيد التطوير</option><option value="مخطط">مخطط</option></select></div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))',gap:20}}>{filtered.map((r,i)=><div key={i} onClick={()=>setSel(sel===i?null:i)} className="card" style={{padding:24,cursor:'pointer',borderRight:sel===i?`4px solid var(--teal)`:'4px solid transparent'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16}}><div><h3 style={{fontSize:18,fontWeight:700}}>{r.name}</h3><span style={{fontSize:13,color:'var(--text-muted)'}}>{r.gov}</span></div><StatusBadge label={r.status}/></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,fontSize:14}}><div><span style={{color:'var(--text-muted)'}}>المساحة: </span><strong>{r.area} هـ</strong></div><div><span style={{color:'var(--text-muted)'}}>المزروع: </span><strong>{r.cult} هـ</strong></div><div><span style={{color:'var(--text-muted)'}}>المناخ: </span>{r.climate}</div><div><span style={{color:'var(--text-muted)'}}>التربة: </span>{r.soil}</div></div>{sel===i&&<div style={{marginTop:16,paddingTop:16,borderTop:'1px solid var(--border)',display:'flex',flexDirection:'column',gap:8,fontSize:14}}><div><span style={{color:'var(--text-muted)'}}>المياه: </span>{r.water}</div><div><span style={{color:'var(--text-muted)'}}>المحاصيل: </span>{r.crops}</div></div>}</div>)}</div>
+    <div className="card" style={{padding:24,display:'flex',flexDirection:'column',alignItems:'center'}}><h3 style={{fontSize:16,fontWeight:700,marginBottom:24,color:'var(--teal)'}}>📊 توزيع المساحات المزروعة</h3><ResponsiveContainer width="100%" height={320}><PieChart><Pie data={regions.map(r=>({name:r.name,value:parseInt(r.cult.replace(/,/g,''))}))} cx="50%" cy="50%" innerRadius={70} outerRadius={120} paddingAngle={4} dataKey="value">{regions.map((_,i)=><Cell key={i} fill={COLS[i]} stroke="white" strokeWidth={2}/>)}</Pie><Tooltip contentStyle={{borderRadius:12,border:'1px solid var(--border)',fontFamily:'Kanit'}}/></PieChart></ResponsiveContainer><div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:20,marginTop:12,fontSize:13}}>{regions.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:12,height:12,borderRadius:3,background:COLS[i]}}/>{r.name} — {r.cult} هـ</div>)}</div></div>
+  </div>
 }

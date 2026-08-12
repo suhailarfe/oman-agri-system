@@ -1,22 +1,24 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
-import { Badge } from "../components/ui/badge"
-import { regions, stats } from "../data/regions"
-import { farms } from "../data/farms"
-import { formatCurrency, formatNumber } from "../lib/utils"
-import { Map, Sprout, TrendingUp, DollarSign } from "lucide-react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { Map, Sprout, TrendingUp, DollarSign, MapPin } from 'lucide-react'
+import { StatCard } from '../components/StatCard'
+import { StatusBadge } from '../components/StatusBadge'
+import { regions, stats } from '../data/regions'
+import { farms } from '../data/farms'
+const COLS=['var(--teal)','var(--gold)','var(--indigo)','var(--green)','var(--red)']
+const cd=regions.map(r=>({name:r.name,'المساحة':parseInt(r.cult.replace(/,/g,''))}))
+const pd=regions.map(r=>({name:r.name,value:parseInt(r.cult.replace(/,/g,''))}))
 
-const statCards = [
-  { title: "إجمالي المساحة", value: `${formatNumber(stats.totalAreaHa / 1000000)}M هكتار`, icon: Map, color: "text-blue-600", bg: "bg-blue-600/10" },
-  { title: "المساحة المزروعة", value: `${formatNumber(stats.totalCultivatedHa)} هكتار`, icon: Sprout, color: "text-emerald-600", bg: "bg-emerald-600/10" },
-  { title: "مناطق نشطة", value: stats.activeRegions, icon: TrendingUp, color: "text-amber-600", bg: "bg-amber-600/10" },
-  { title: "إجمالي الاستثمار", value: formatCurrency(stats.totalInvestmentOMR), icon: DollarSign, color: "text-purple-600", bg: "bg-purple-600/10" },
-]
-const sv: Record<string, "default"|"secondary"|"outline"> = { "نشط":"default", "قيد التطوير":"secondary", "مخطط":"outline", "منتج":"default", "قيد الإنشاء":"secondary" }
-
-export default function DashboardPage() {
-  return (<div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">لوحة التحكم</h1><p className="text-muted-foreground">نظرة عامة على المشروع الزراعي — رؤية عُمان 2040</p></div>
-  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{statCards.map(c=>(<Card key={c.title} className="border-border/50"><CardHeader className="flex flex-row items-center justify-between pb-2"><CardTitle className="text-sm font-medium text-muted-foreground">{c.title}</CardTitle><div className={`${c.bg} p-2 rounded-lg`}><c.icon className={`h-4 w-4 ${c.color}`} /></div></CardHeader><CardContent><div className="text-2xl font-bold">{c.value}</div></CardContent></Card>))}</div>
-  <div className="grid gap-6 md:grid-cols-2"><Card><CardHeader><CardTitle className="text-lg">المناطق الزراعية</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المنطقة</TableHead><TableHead>المحافظة</TableHead><TableHead>المساحة</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{regions.map(r=>(<TableRow key={r.id}><TableCell className="font-medium">{r.name}</TableCell><TableCell className="text-muted-foreground">{r.governorate}</TableCell><TableCell>{formatNumber(r.totalAreaHa)}</TableCell><TableCell><Badge variant={sv[r.status]}>{r.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card>
-  <Card><CardHeader><CardTitle className="text-lg">المزارع</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المزرعة</TableHead><TableHead>المنطقة</TableHead><TableHead>المساحة</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{farms.map(f=>(<TableRow key={f.id}><TableCell className="font-medium">{f.name}</TableCell><TableCell className="text-muted-foreground">{f.regionName}</TableCell><TableCell>{f.areaHa} هكتار</TableCell><TableCell><Badge variant={sv[f.status]}>{f.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></div></div>)
-}
+export default function DashboardPage(){return <div style={{maxWidth:1280,margin:'0 auto',padding:'32px 24px',display:'flex',flexDirection:'column',gap:32}}>
+<div><h1 style={{fontSize:28,fontWeight:800,color:'var(--teal)'}}>🇴🇲 لوحة التحكم</h1><p style={{color:'var(--text-secondary)',marginTop:4}}>نظرة عامة على المشروع الزراعي الوطني</p></div>
+<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))',gap:16}}>
+  {[{l:'إجمالي المساحة',v:stats.totalArea,u:'هكتار',i:Map,c:'var(--teal)',ch:'16.97M هكتار'},{l:'المساحة المزروعة',v:stats.totalCult,u:'هكتار',i:Sprout,c:'var(--green)',ch:'+18% سنوياً'},{l:'مناطق نشطة',v:'3',u:'من 5',i:TrendingUp,c:'var(--gold)',ch:'60% مفعلة'},{l:'إجمالي الاستثمار',v:stats.investment,u:'ر.ع',i:DollarSign,c:'var(--indigo)',ch:stats.investmentUSD}].map((s,i)=><StatCard key={i} label={s.l} value={s.v} unit={s.u} icon={s.i} color={s.c} change={s.ch} bg={`${s.c}12`}/>)}
+</div>
+<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(400px, 1fr))',gap:24}}>
+  <div className="card" style={{padding:24}}><h3 style={{fontSize:16,fontWeight:700,marginBottom:20,display:'flex',alignItems:'center',gap:8,color:'var(--teal)'}}><MapPin size={18}/> المساحات المزروعة حسب المنطقة</h3><ResponsiveContainer width="100%" height={280}><BarChart data={cd} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false}/><XAxis type="number" tick={{fontSize:11}}/><YAxis dataKey="name" type="category" tick={{fontSize:12}} width={90}/><Tooltip contentStyle={{borderRadius:12,border:'1px solid var(--border)',fontFamily:'Kanit'}}/><Bar dataKey="المساحة" radius={[0,8,8,0]} fill="var(--teal)" barSize={20}/></BarChart></ResponsiveContainer></div>
+  <div className="card" style={{padding:24,display:'flex',flexDirection:'column',alignItems:'center'}}><h3 style={{fontSize:16,fontWeight:700,marginBottom:16,color:'var(--teal)'}}>نسب المساحات المزروعة</h3><ResponsiveContainer width="100%" height={260}><PieChart><Pie data={pd} cx="50%" cy="50%" innerRadius={55} outerRadius={95} paddingAngle={3} dataKey="value">{pd.map((_,i)=><Cell key={i} fill={COLS[i]}/>)}</Pie><Tooltip contentStyle={{borderRadius:12,border:'1px solid var(--border)',fontFamily:'Kanit'}}/></PieChart></ResponsiveContainer><div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:16,marginTop:8,fontSize:12}}>{regions.map((r,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:10,height:10,borderRadius:2,background:COLS[i]}}/>{r.name}</div>)}</div></div>
+</div>
+<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit, minmax(400px, 1fr))',gap:24}}>
+  <div className="card" style={{padding:24,overflowX:'auto'}}><h3 style={{fontSize:16,fontWeight:700,marginBottom:16,color:'var(--teal)',display:'flex',alignItems:'center',gap:8}}><Map size={16}/> المناطق الزراعية</h3><table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}><thead><tr style={{borderBottom:'2px solid var(--border)'}}>{['المنطقة','المساحة','المزروع','نسبة','الحالة'].map(h=><th key={h} style={{textAlign:'right',padding:'10px 12px',color:'var(--text-muted)',fontWeight:600}}>{h}</th>)}</tr></thead><tbody>{regions.map(r=><tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}><td style={{padding:'12px',fontWeight:600}}>{r.name}</td><td style={{padding:'12px',color:'var(--text-secondary)'}}>{r.area}</td><td style={{padding:'12px'}}>{r.cult}</td><td style={{padding:'12px'}}><div style={{width:60,height:5,background:'var(--border)',borderRadius:3,overflow:'hidden'}}><div style={{width:`${Math.min(parseInt(r.cult.replace(/,/g,''))/1000,100)}%`,height:'100%',background:'var(--teal)',borderRadius:3}}/></div></td><td style={{padding:'12px'}}><StatusBadge label={r.status}/></td></tr>)}</tbody></table></div>
+  <div className="card" style={{padding:24,overflowX:'auto'}}><h3 style={{fontSize:16,fontWeight:700,marginBottom:16,color:'var(--teal)',display:'flex',alignItems:'center',gap:8}}><Sprout size={16}/> المزارع</h3><table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}><thead><tr style={{borderBottom:'2px solid var(--border)'}}>{['المزرعة','المساحة','ماء/يوم','التأسيس','الحالة'].map(h=><th key={h} style={{textAlign:'right',padding:'10px 12px',color:'var(--text-muted)',fontWeight:600}}>{h}</th>)}</tr></thead><tbody>{farms.map((f,i)=><tr key={i} style={{borderBottom:'1px solid var(--border)'}}><td style={{padding:'12px',fontWeight:600}}>{f.name}</td><td style={{padding:'12px'}}>{f.area} هـ</td><td style={{padding:'12px',color:'var(--text-secondary)'}}>{f.water} م³</td><td style={{padding:'12px',color:'var(--text-secondary)'}}>{f.year}</td><td style={{padding:'12px'}}><StatusBadge label={f.status}/></td></tr>)}</tbody></table></div>
+</div>
+</div>}

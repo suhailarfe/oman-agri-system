@@ -1,16 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
-import { Badge } from "../components/ui/badge"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../components/ui/accordion"
-import { farms, waterSolutions, seedSources } from "../data/farms"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-
-const v: Record<string, "default"|"secondary"|"outline"> = { "منتج":"default", "قيد الإنشاء":"secondary", "قيد التخطيط":"outline", "نشط":"default", "تجريبي":"secondary" }
-
-export default function FarmsPage() {
-  return (<div className="space-y-6"><div><h1 className="text-2xl font-bold tracking-tight">المزارع والمحاصيل</h1><p className="text-muted-foreground">إدارة المزارع، حلول المياه، ومصادر البذور الطبيعية</p></div>
-  <Tabs defaultValue="farms"><TabsList className="mb-4"><TabsTrigger value="farms">المزارع</TabsTrigger><TabsTrigger value="water">حلول المياه</TabsTrigger><TabsTrigger value="seeds">مصادر البذور</TabsTrigger></TabsList>
-  <TabsContent value="farms"><Card><CardHeader><CardTitle>قائمة المزارع</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المزرعة</TableHead><TableHead>المنطقة</TableHead><TableHead>المساحة</TableHead><TableHead>نظام الري</TableHead><TableHead>المحاصيل</TableHead><TableHead>استهلاك الماء</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{farms.map(f=>(<TableRow key={f.id}><TableCell className="font-medium">{f.name}</TableCell><TableCell>{f.regionName}</TableCell><TableCell>{f.areaHa} هكتار</TableCell><TableCell>{f.irrigationSystem}</TableCell><TableCell>{f.crops}</TableCell><TableCell>{f.waterConsumptionDaily} م³/يوم</TableCell><TableCell><Badge variant={v[f.status]}>{f.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent>
-  <TabsContent value="water"><Card><CardHeader><CardTitle>حلول المياه المبتكرة</CardTitle></CardHeader><CardContent><Accordion>{waterSolutions.map((ws,i)=>(<AccordionItem key={i} value={`w-${i}`}><AccordionTrigger><div className="flex items-center gap-3"><span>{ws.name}</span><Badge variant={v[ws.status]}>{ws.status}</Badge></div></AccordionTrigger><AccordionContent><p>التكلفة: <strong>{ws.cost}</strong></p><p>السعة: <strong>{ws.capacity}</strong></p></AccordionContent></AccordionItem>))}</Accordion></CardContent></Card></TabsContent>
-  <TabsContent value="seeds"><Card><CardHeader><CardTitle>مصادر البذور الطبيعية Non-GMO</CardTitle></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>المصدر</TableHead><TableHead>النوع</TableHead><TableHead>السجلات</TableHead><TableHead>الحالة</TableHead></TableRow></TableHeader><TableBody>{seedSources.map((s,i)=>(<TableRow key={i}><TableCell className="font-medium">{s.name}</TableCell><TableCell>{s.type}</TableCell><TableCell>{s.records}</TableCell><TableCell><Badge variant={v[s.status]}>{s.status}</Badge></TableCell></TableRow>))}</TableBody></Table></CardContent></Card></TabsContent></Tabs></div>)
-}
+import { farms } from '../data/farms'
+import { StatusBadge } from '../components/StatusBadge'
+export default function FarmsPage(){return <div style={{maxWidth:1280,margin:'0 auto',padding:'32px 24px',display:'flex',flexDirection:'column',gap:24}}>
+<div><h1 style={{fontSize:28,fontWeight:800,color:'var(--teal)'}}>🌱 المزارع والمحاصيل</h1><p style={{color:'var(--text-secondary)',marginTop:4}}>قائمة المزارع النموذجية ضمن المشروع الوطني</p></div>
+<div className="card" style={{padding:8,overflowX:'auto'}}>
+<table style={{width:'100%',borderCollapse:'collapse',fontSize:14,minWidth:700}}>
+<thead><tr style={{background:'var(--teal-light)',borderBottom:'2px solid var(--teal)'}}>{['المزرعة','المنطقة','المساحة (هـ)','نظام الري','المحاصيل','الماء (م³/يوم)','التأسيس','الحالة'].map(h=><th key={h} style={{textAlign:'right',padding:'14px 16px',color:'var(--teal)',fontWeight:700,fontSize:13,whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+<tbody>{farms.map((f,i)=><tr key={i} style={{borderBottom:'1px solid var(--border)',transition:'background .15s'}} onMouseEnter={e=>e.currentTarget.style.background='var(--teal-light)'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}><td style={{padding:'14px 16px',fontWeight:600}}>{f.name}</td><td style={{padding:'14px 16px',color:'var(--text-secondary)'}}>{f.region}</td><td style={{padding:'14px 16px'}}>{f.area}</td><td style={{padding:'14px 16px',color:'var(--text-secondary)'}}>{f.irr}</td><td style={{padding:'14px 16px'}}>{f.crops}</td><td style={{padding:'14px 16px'}}>{f.water}</td><td style={{padding:'14px 16px',color:'var(--text-secondary)'}}>{f.year}</td><td style={{padding:'14px 16px'}}><StatusBadge label={f.status}/></td></tr>)}</tbody></table>
+</div></div>}
