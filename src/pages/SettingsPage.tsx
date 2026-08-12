@@ -1,0 +1,16 @@
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
+import { Badge } from "../components/ui/badge"
+import { Separator } from "../components/ui/separator"
+import { Mail, Phone, Globe, Shield, Database } from "lucide-react"
+import { GitBranch } from "lucide-react"
+
+export default function SettingsPage() {
+  return (<div className="space-y-6 max-w-2xl"><div><h1 className="text-2xl font-bold tracking-tight">الإعدادات</h1><p className="text-muted-foreground">إدارة الملف الشخصي ومعلومات النظام</p></div>
+  <Card><CardHeader><CardTitle>الملف الشخصي</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex items-center gap-4"><Avatar className="h-16 w-16"><AvatarImage src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Qaboos_bin_Said_%282013%29.jpg/330px-Qaboos_bin_Said_%282013%29.jpg" /><AvatarFallback>سهيل</AvatarFallback></Avatar><div><h3 className="text-lg font-semibold">سهيل عارف قائد أحمد الحكيمي</h3><p className="text-sm text-muted-foreground">مدير النظام — باحث في الأمن الغذائي</p><Badge variant="outline" className="mt-1">Admin</Badge></div></div><Separator />
+  <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-1"><label className="text-sm font-medium">البريد الإلكتروني</label><div className="flex items-center gap-2 text-sm text-muted-foreground"><Mail className="h-4 w-4" /> suhailarfe@gmail.com</div></div>
+  <div className="space-y-1"><label className="text-sm font-medium">الهاتف</label><div className="flex items-center gap-2 text-sm text-muted-foreground"><Phone className="h-4 w-4" /> 00967736986271</div></div>
+  <div className="space-y-1"><label className="text-sm font-medium">GitHub</label><div className="flex items-center gap-2 text-sm text-muted-foreground"><GitBranch className="h-4 w-4" /> github.com/suhailarfe</div></div>
+  <div className="space-y-1"><label className="text-sm font-medium">الموقع</label><div className="flex items-center gap-2 text-sm text-muted-foreground"><Globe className="h-4 w-4" /> suhailarfe.github.io/oman-agri-system</div></div></div></CardContent></Card>
+  <Card><CardHeader><CardTitle>معلومات النظام</CardTitle></CardHeader><CardContent className="space-y-3"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><Database className="h-4 w-4 text-emerald-600" /><span className="text-sm">قاعدة البيانات</span></div><span className="text-sm text-muted-foreground">SQL — 7 جداول مترابطة</span></div><Separator /><div className="flex items-center justify-between"><div className="flex items-center gap-2"><Shield className="h-4 w-4 text-emerald-600" /><span className="text-sm">الصلاحيات</span></div><span className="text-sm text-muted-foreground">Admin / Farmer / Supplier</span></div><Separator /><div className="flex items-center justify-between"><div className="flex items-center gap-2"><Globe className="h-4 w-4 text-emerald-600" /><span className="text-sm">الإصدار</span></div><span className="text-sm text-muted-foreground">1.0.0 — 2025/2026م</span></div></CardContent></Card></div>)
+}
