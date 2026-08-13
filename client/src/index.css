@@ -185,3 +185,48 @@ button { border: 0; }
 @media (max-width: 900px) {
   .contact-section { grid-template-columns: 1fr; gap: 2rem; }
 }
+
+
+/* تأثيرات حركية تفاعلية (Hover Effects) للبطاقات وصورة السلطان */
+.motion-3d-card {
+  transition: transform 400ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 400ms ease;
+}
+.motion-3d-card:hover {
+  transform: perspective(1000px) rotateY(-2deg) rotateX(2deg) scale(1.02);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+
+/* قص صورة السلطان بحيث تظهر مقوصة ومركزة من الأعلى عند مستوى اللحية */
+.motion-3d-image {
+  overflow: hidden;
+  border-radius: 20px;
+}
+.motion-3d-image img {
+  width: 100%;
+  height: 140%;
+  object-fit: cover;
+  object-position: center 18%; /* تركيز على الجزء العلوي والوجه وصولاً لمستوى اللحية */
+  transition: transform 600ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.motion-3d-card:hover .motion-3d-image img {
+  transform: scale(1.04);
+}
+
+.map-pin-card {
+  transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 250ms ease, border-color 250ms ease;
+}
+.map-pin-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: var(--copper);
+  box-shadow: 0 16px 36px rgba(31,90,69,0.15);
+}
+
+/* تحسين نموذج تواصل معنا برسائل تأكيد مرئية والتحقق */
+.contact-form-card input:invalid:not(:placeholder-shown),
+.contact-form-card textarea:invalid:not(:placeholder-shown) {
+  border-color: #e57373;
+}
+.contact-form-card input:valid:not(:placeholder-shown),
+.contact-form-card textarea:valid:not(:placeholder-shown) {
+  border-color: #81c784;
+}

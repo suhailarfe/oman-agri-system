@@ -249,7 +249,10 @@ export default function Home() {
                     <p>{reg.area}</p>
                     <div className="region-status-pill">{reg.status}</div>
                     <div className="mt-2 text-xs text-muted">💧 نظام الري: <b>{reg.irrigationSystem}</b></div>
-                    <span className="pin-action mt-3 inline-block">فتح النافذة التفصيلية ←</span>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-line">
+                      <button className="text-button text-falaj text-xs" onClick={(e) => { e.stopPropagation(); setSelectedRegion(reg); }}>نافذة سريعة</button>
+                      <a href={`/region/${reg.code}`} className="pin-action text-xs font-bold text-copper hover:underline">الصفحة المستقلة ←</a>
+                    </div>
                   </div>
                 ))}
               </div>
