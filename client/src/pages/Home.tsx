@@ -1,5 +1,5 @@
 /*
- * Design system: سجلّ الواحة المعاصر + فلاتر الخريطة + لوحة المشرفين + تصدير PDF + صورة الكتاب والقهوة والشعار.
+ * Design system: سجلّ الواحة المعاصر + صورة السلطان في بطاقة 3D + شعار 2040 بجوار النص + الفلاتر ولوحة المشرفين والتصدير.
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -7,17 +7,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import {
   ArrowUpLeft,
-  ChevronDown,
   Droplets,
   ExternalLink,
-  Leaf,
   MapPin,
   Menu,
   Sprout,
   X,
   Compass,
   ShieldCheck,
-  BarChart3,
   UserCheck,
   Settings,
   FileDown,
@@ -26,12 +23,11 @@ import {
 
 const assets = {
   hero: "/manus-storage/oman-oasis-hero-reference_def5e252.jpg",
-  // تم استبدال صورة السلطان بصورة الكتاب والقهوة العُمانية التراثية المعبرة عن الأصالة
-  coffeeAndBook: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=86",
+  // إعادة صورة جلالة السلطان المعظم إلى بطاقة العرض الرئيسية
+  sultanHaitham: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=86",
   visionMark: "/manus-storage/oman-oasis-mark_f385a746.png",
   about: "https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=1600&q=86",
   water: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=86",
-  fields: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=1400&q=86",
 };
 
 const navItems = [
@@ -106,12 +102,10 @@ export default function Home() {
     });
   };
 
-  // تصدير تقرير الأمن الغذائي PDF
   const handleExportPDF = () => {
     window.print();
   };
 
-  // فلترة المناطق
   const filteredRegions = regionsData?.filter((reg) => {
     if (filterRegion !== "all" && reg.code !== filterRegion) return false;
     if (filterCropType !== "all" && !reg.crop.includes(filterCropType)) return false;
@@ -145,23 +139,24 @@ export default function Home() {
       </header>
 
       <main id="top">
-        {/* القسم الرئيسي مع استبدال صورة السلطان بصورة الكتاب والقهوة وشعار 2040 */}
+        {/* القسم الرئيسي: شعار 2040 بجوار النص، وبطاقة 3D تحتوي صورة جلالة السلطان المعظم */}
         <section className="hero-vision-official" aria-labelledby="hero-title">
           <div className="hero-vision-bg" style={{ backgroundImage: `url(${assets.hero})` }} />
           <div className="hero-vision-overlay" />
 
           <div className="hero-vision-container page-pad">
             <div className="hero-vision-content">
+              {/* شعار رؤية عُمان 2040 بجوار عبارة البرنامج الحكومي */}
               <div className="vision-badge-header">
                 <img src={assets.visionMark} alt="شعار رؤية عمان 2040" className="vision-official-mark" />
-                <span>برنامج الأمن الغذائي والاستزراع الحكومي</span>
+                <span>برنامج الأمن الغذائي والاستزراع الحكومي — رؤية عُمان 2040</span>
               </div>
               <h1 id="hero-title">
                 نحو مستقبل زراعي مستدام<br />
                 <em>برؤية عُمان 2040</em>
               </h1>
               <p className="hero-official-desc">
-                استغلال الأراضي الحكومية الواعدة، توظيف التقنيات الحديثة، وتحقيق الأمن الغذائي المستدام المستوحى من أصالة التراث العُماني ورؤية المستقبل.
+                استغلال الأراضي الحكومية الواعدة، توظيف التقنيات الحديثة، وتحقيق الأمن الغذائي المستدام تحت التوجيهات السامية لحضرة صاحب الجلالة السلطان هيثم بن طارق المعظم حفظه الله ورعاه.
               </p>
               <div className="hero-buttons">
                 <a className="primary-button" href="#map-section">
@@ -173,14 +168,14 @@ export default function Home() {
               </div>
             </div>
 
-            {/* بطاقة 3D تدمج صورة الكتاب والقهوة العُمانية مع شعار 2040 */}
+            {/* بطاقة 3D تحتوي صورة جلالة السلطان المعظم */}
             <div className="motion-3d-card">
               <div className="motion-3d-inner">
                 <div className="motion-3d-image">
-                  <img src={assets.coffeeAndBook} alt="التراث العُماني الأصيل — الكتاب والقهوة" />
+                  <img src={assets.sultanHaitham} alt="المقام السامي لحضرة صاحب الجلالة السلطان هيثم بن طارق المعظم" />
                   <div className="motion-3d-caption">
-                    <strong>الأصالة والمعاصرة</strong>
-                    <span>إرث الأجداد وآفاق رؤية عُمان 2040</span>
+                    <strong>حضرة صاحب الجلالة</strong>
+                    <span>السلطان هيثم بن طارق المعظم حفظه الله ورعاه</span>
                   </div>
                 </div>
                 <div className="motion-3d-brand">
@@ -192,7 +187,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* قسم الخريطة التفاعلية مع أدوات الفلاتر الجديدة */}
+        {/* قسم الخريطة التفاعلية مع الفلاتر */}
         <section className="interactive-map-section page-pad" id="map-section">
           <div className="section-heading">
             <div>
@@ -202,7 +197,6 @@ export default function Home() {
             <p>استخدم أدوات التصفية أدناه لاستعراض المناطق الواعدة وفقاً لمتطلبات الاستثمار أو نوع المحاصيل المستهدفة.</p>
           </div>
 
-          {/* أدوات الفلاتر (Filters) */}
           <div className="filter-toolbar">
             <div className="filter-group">
               <label><Filter size={15} /> تصفية حسب المنطقة:</label>
@@ -254,7 +248,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* نافذة التفاصيل التفاعلية Modal */}
+        {/* نافذة التفاصيل Modal */}
         {selectedRegion && (
           <div className="region-modal-overlay" onClick={() => setSelectedRegion(null)}>
             <div className="region-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -336,7 +330,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* قسم تحليل مؤشرات الأمن الغذائي مع زر تصدير PDF */}
+        {/* قسم الأمن الغذائي وتصدير PDF */}
         <section className="food-security-section page-pad" id="food-security">
           <div className="section-heading">
             <div>
@@ -370,7 +364,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* لوحة تحكم مخصصة للمشرفين (تحديث بيانات المحاصيل وحالة الري) */}
+        {/* لوحة تحكم المشرفين */}
         <section className="admin-dashboard-section page-pad" id="admin-dashboard">
           <div className="section-heading">
             <div>
