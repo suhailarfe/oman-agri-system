@@ -1,7 +1,5 @@
 /*
- * Design system: سجلّ الواحة المعاصر.
- * Falaj green #1F5A45, warm cream, restrained copper, editorial asymmetry.
- * Motion uses transform/opacity only and respects prefers-reduced-motion.
+ * Design system: سجلّ الواحة المعاصر + نظام نوافذ تفاعلية + خريطة 3D واستكشاف مناطق عُمان.
  */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -55,25 +53,77 @@ button { border: 0; }
 .hero { position: relative; display: flex; align-items: flex-end; min-height: min(920px, 100vh); color: #fff; background: var(--dark); isolation: isolate; }
 .hero-image, .hero-wash { position: absolute; inset: 0; z-index: -2; }
 .hero-image { background-position: center; background-size: cover; transform: scale(1.02); }
-.hero-wash { z-index: -1; background: linear-gradient(90deg, rgba(7,21,15,.82) 0%, rgba(11,28,20,.53) 40%, rgba(11,28,20,.1) 78%), linear-gradient(0deg, rgba(7,21,15,.74) 0%, transparent 52%); }
-.hero-content { width: min(100%, 1230px); padding-top: 10rem; padding-bottom: 8.4rem; }
+.hero-wash { z-index: -1; background: linear-gradient(90deg, rgba(7,21,15,.88) 0%, rgba(11,28,20,.6) 45%, rgba(11,28,20,.15) 80%), linear-gradient(0deg, rgba(7,21,15,.74) 0%, transparent 52%); }
+.hero-content { width: min(100%, 1230px); padding-top: 10rem; padding-bottom: 8.4rem; z-index: 2; }
 .hero-kicker, .eyebrow { display: flex; align-items: center; gap: .65rem; color: #d9b18a; font-size: .72rem; letter-spacing: .1em; }
 .kicker-line { display: inline-block; width: 36px; height: 1px; background: var(--copper); }
 .hero h1 { max-width: 750px; margin: 1.8rem 0 1.7rem; font-family: "Noto Kufi Arabic", sans-serif; font-size: clamp(3.5rem, 8vw, 8.7rem); font-weight: 900; line-height: 1.13; letter-spacing: -.07em; }
 .hero h1 em, .water-content h2 em { color: #d5a477; font-style: normal; }
-.hero-intro { max-width: 410px; margin: 0 0 2.3rem; color: rgba(255,255,255,.8); font-size: 1rem; line-height: 2; }
+.hero-intro { max-width: 440px; margin: 0 0 2.3rem; color: rgba(255,255,255,.82); font-size: 1rem; line-height: 2; }
 .hero-actions { display: flex; align-items: center; gap: 1.5rem; }
-.primary-button { display: inline-flex; align-items: center; gap: .7rem; padding: .9rem 1.25rem; color: var(--paper); background: var(--falaj); border: 1px solid var(--falaj); border-radius: 999px; font-size: .82rem; transition: transform 160ms ease, background-color 180ms ease, border-color 180ms ease; }
+.primary-button { display: inline-flex; align-items: center; gap: .7rem; padding: .9rem 1.4rem; color: var(--paper); background: var(--falaj); border: 1px solid var(--falaj); border-radius: 999px; font-size: .82rem; transition: transform 160ms ease, background-color 180ms ease, border-color 180ms ease; cursor: pointer; }
 .primary-button:hover { background: var(--falaj-deep); border-color: var(--falaj-deep); transform: translateY(-2px); }
-.primary-button:active, .nav-contact:active { transform: scale(.97); }
 .text-button { display: inline-flex; align-items: center; gap: .35rem; color: rgba(255,255,255,.78); font-size: .78rem; transition: color 180ms ease; }
 .text-button:hover { color: #fff; }
-.hero-meta { position: absolute; right: 0; bottom: 1.6rem; left: 0; display: flex; justify-content: space-between; color: rgba(255,255,255,.52); font-size: .65rem; letter-spacing: .12em; }
-.hero-stamp { position: absolute; top: 25%; left: clamp(1.4rem, 7vw, 8.5rem); display: grid; justify-items: center; gap: .15rem; width: 120px; height: 120px; padding-top: 1.65rem; color: rgba(255,255,255,.74); border: 1px solid rgba(255,255,255,.34); border-radius: 50%; transform: rotate(-12deg); text-align: center; }
+
+/* عنصر شارة جلالة السلطان وشعار 2040 (3D Cinematic Box) */
+.royal-vision-badge { position: absolute; top: 22%; left: 5%; z-index: 10; width: 340px; background: rgba(17,34,27,0.78); border: 1px solid rgba(213,164,119,0.45); border-radius: 24px; padding: 1.2rem; backdrop-filter: blur(14px); box-shadow: 0 24px 50px rgba(0,0,0,0.45); transform: perspective(1000px) rotateY(-8deg) rotateX(4deg); transition: transform 0.3s ease; }
+.royal-vision-badge:hover { transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.02); }
+.royal-badge__inner { display: flex; align-items: center; gap: 1.1rem; }
+.royal-badge__portrait { width: 110px; height: 110px; border-radius: 16px; overflow: hidden; border: 2px solid var(--copper); flex-shrink: 0; }
+.royal-badge__portrait img { width: 100%; height: 100%; object-fit: cover; }
+.royal-badge__logo-box { display: grid; justify-items: center; text-align: center; gap: .4rem; }
+.royal-badge__logo-box img { width: 75px; height: 75px; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(255,255,255,0.25)); }
+.royal-badge__logo-box span { color: #f7f1e6; font-family: "Noto Kufi Arabic", sans-serif; font-size: .75rem; font-weight: 700; }
+
+.hero-meta { position: absolute; right: 0; bottom: 1.6rem; left: 0; display: flex; justify-content: space-between; color: rgba(255,255,255,.52); font-size: .65rem; letter-spacing: .12em; z-index: 2; }
+.hero-stamp { position: absolute; top: 62%; left: clamp(1.4rem, 7vw, 8.5rem); display: grid; justify-items: center; gap: .15rem; width: 120px; height: 120px; padding-top: 1.65rem; color: rgba(255,255,255,.74); border: 1px solid rgba(255,255,255,.34); border-radius: 50%; transform: rotate(-12deg); text-align: center; z-index: 2; }
 .hero-stamp::before { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; }
 .hero-stamp span { font-size: .56rem; letter-spacing: .18em; text-transform: uppercase; }
 .hero-stamp b { color: #d5a477; font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.08rem; }
 .hero-stamp small { font-size: .42rem; line-height: 1.35; letter-spacing: .05em; text-transform: uppercase; }
+
+/* قسم الخريطة التفاعلية واستكشاف المناطق */
+.interactive-map-section { padding-top: 6rem; padding-bottom: 6rem; background: var(--paper); }
+.map-interactive-container { margin-top: 3rem; display: grid; gap: 2.5rem; }
+.map-visual-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+.map-pin-card { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 1.6rem; cursor: pointer; transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+.map-pin-card:hover { transform: translateY(-5px); border-color: var(--falaj); box-shadow: 0 12px 32px rgba(31,90,69,0.12); }
+.map-pin-card.active { border-color: var(--copper); background: #fdfaf6; }
+.pin-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--copper); }
+.pin-number { font-family: "Noto Kufi Arabic", sans-serif; font-size: .85rem; font-weight: 800; }
+.map-pin-card h3 { margin: 0 0 .3rem; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.1rem; font-weight: 800; }
+.map-pin-card p { margin: 0 0 1rem; color: var(--muted); font-size: .75rem; }
+.pin-action { display: inline-block; color: var(--falaj); font-size: .75rem; font-weight: 600; }
+
+.map-preview-banner { display: flex; justify-content: space-between; align-items: center; background: var(--falaj-soft); border: 1px solid rgba(31,90,69,0.25); border-radius: 16px; padding: 1.8rem 2.2rem; }
+.map-preview-text { display: flex; align-items: center; gap: 1.2rem; color: var(--falaj-deep); }
+.map-preview-text strong { display: block; font-size: .95rem; font-family: "Noto Kufi Arabic", sans-serif; }
+.map-preview-text p { margin: .2rem 0 0; color: var(--muted); font-size: .8rem; }
+
+/* نافذة التفاصيل المنبثقة (Modal) */
+.region-modal-overlay { position: fixed; inset: 0; background: rgba(11,28,20,0.75); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+.region-modal-content { background: var(--paper); width: min(100%, 780px); max-height: 90vh; border-radius: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow-y: auto; position: relative; border: 1px solid var(--sand); animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes modalEnter { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.modal-close-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: #eef1eb; color: var(--ink); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 160ms ease; }
+.modal-close-btn:hover { background: var(--copper); color: #fff; }
+.modal-header { padding: 2.5rem 2.5rem 1.5rem; border-bottom: 1px solid var(--line); }
+.modal-kicker { color: var(--copper); font-size: .75rem; font-weight: 600; letter-spacing: .08em; }
+.modal-header h2 { margin: .5rem 0 .2rem; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 2rem; font-weight: 900; }
+.modal-sub { color: var(--muted); font-size: .85rem; }
+.modal-tabs { display: flex; gap: .5rem; padding: 1rem 2.5rem 0; border-bottom: 1px solid var(--line); background: #fff; }
+.modal-tabs button { background: transparent; padding: .75rem 1.2rem; font-size: .8rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; cursor: pointer; transition: color 160ms ease, border-color 160ms ease; }
+.modal-tabs button.active { color: var(--falaj); border-bottom-color: var(--falaj); }
+.modal-body { padding: 2.2rem 2.5rem; }
+.tab-pane p { line-height: 2; color: var(--ink); font-size: .95rem; }
+.crop-highlight-box, .water-highlight-box { display: flex; align-items: center; gap: 1rem; background: var(--falaj-soft); color: var(--falaj-deep); padding: 1.2rem 1.5rem; border-radius: 14px; margin-top: 1rem; border: 1px solid rgba(31,90,69,0.2); }
+.metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem; }
+.metric-box { background: #fff; border: 1px solid var(--line); padding: 1.2rem; border-radius: 14px; text-align: center; }
+.metric-box span { display: block; color: var(--muted); font-size: .7rem; margin-bottom: .4rem; }
+.metric-box strong { color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.1rem; }
+.modal-footer { padding: 1.5rem 2.5rem; background: #fff; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; }
+.modal-badge-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.modal-badge-row span { background: #eef1eb; color: var(--falaj); padding: .4rem .9rem; border-radius: 999px; font-size: .75rem; font-weight: 600; }
 
 .section-label { display: flex; align-items: center; gap: .7rem; color: var(--copper); font-size: .66rem; letter-spacing: .15em; }
 .section-label span:first-child { font-family: "IBM Plex Sans Arabic", sans-serif; font-size: .72rem; }
@@ -107,41 +157,26 @@ button { border: 0; }
 .field-note-title { display: flex; align-items: center; gap: .6rem; color: #d9b18a; font-size: .75rem; }
 .field-mark { font-size: 1.7rem; line-height: 0; }
 
-.regions { padding-top: clamp(6rem, 12vw, 11rem); padding-bottom: clamp(6rem, 12vw, 12rem); }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 3rem; margin-bottom: 4rem; }
 .section-heading h2 { margin-bottom: 0; }
-.section-heading > p { max-width: 300px; margin: 0 3rem 1rem 0; }
-.atlas-evidence { position: relative; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 1.4rem; min-height: 112px; margin-bottom: 2.8rem; padding: 1.2rem 1.5rem 1.2rem 2rem; overflow: hidden; color: var(--falaj-deep); border: 1px solid var(--line); border-radius: 0 38px 0 0; background: linear-gradient(100deg, rgba(230,239,233,.86), rgba(251,250,246,.6)); }
-.atlas-evidence::before { content: ""; position: absolute; inset: 0; opacity: .45; background-image: linear-gradient(rgba(31,90,69,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(31,90,69,.08) 1px, transparent 1px); background-size: 28px 28px; }
-.atlas-evidence__path { position: absolute; right: -3%; bottom: -55px; width: 63%; height: 125px; border: 2px solid rgba(31,90,69,.32); border-color: transparent transparent rgba(31,90,69,.38) rgba(31,90,69,.38); border-radius: 50%; transform: rotate(-8deg); }
-.atlas-evidence span:not(.atlas-evidence__path) { position: relative; z-index: 1; color: var(--copper); font-size: .68rem; }
-.atlas-evidence b, .atlas-evidence small { position: relative; z-index: 1; }
-.atlas-evidence b { font-family: "Noto Kufi Arabic", sans-serif; font-size: .8rem; font-weight: 800; }
-.atlas-evidence small { color: var(--muted); font-size: .62rem; }
-.regions-list { border-top: 1px solid var(--line); }
-.region-row { display: grid; grid-template-columns: .45fr 1.45fr 1.2fr 1.2fr .2fr; gap: 1.5rem; align-items: center; min-height: 145px; border-bottom: 1px solid var(--line); transition: background-color 220ms ease, padding 220ms ease; }
-.region-row:hover { padding-right: 1rem; padding-left: 1rem; background: #eef1eb; }
-.region-number { color: var(--copper); font-size: .78rem; }
-.region-name h3 { margin: 0 0 .4rem; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.05rem; font-weight: 800; }
-.region-name p, .region-detail span { margin: 0; color: var(--muted); font-size: .67rem; }
-.region-detail { display: grid; gap: .45rem; }
-.region-detail strong { color: var(--ink); font-size: .76rem; font-weight: 500; }
-.region-arrow { color: var(--copper); transition: transform 200ms ease; }
-.region-row:hover .region-arrow { transform: translate(-4px, -4px); }
+.section-heading > p { max-width: 320px; margin: 0 3rem 1rem 0; font-size: .9rem; }
 
 .water-section { position: relative; display: grid; min-height: 730px; color: #fff; background: var(--dark); isolation: isolate; }
 .water-visual { position: absolute; inset: 0 0 0 37%; z-index: -2; background-position: center; background-size: cover; opacity: .78; }
 .water-section::after { content: ""; position: absolute; inset: 0 0 0 25%; z-index: -1; background: linear-gradient(90deg, var(--dark) 0%, rgba(17,34,27,.92) 25%, rgba(17,34,27,.25) 100%); }
-.water-content { align-self: center; width: min(650px, 70%); padding-top: 3rem; padding-bottom: 3rem; }
+.water-content { align-self: center; width: min(680px, 75%); padding-top: 3rem; padding-bottom: 3rem; }
 .water-content h2 { margin: 1.8rem 0 1.6rem; color: #f7f1e6; font-family: "Noto Kufi Arabic", sans-serif; font-size: clamp(2.8rem, 5vw, 5.8rem); font-weight: 900; line-height: 1.28; letter-spacing: -.07em; }
-.water-content p { max-width: 370px; color: rgba(255,255,255,.69); font-size: .94rem; line-height: 2.2; }
+.water-content p { max-width: 420px; color: rgba(255,255,255,.69); font-size: .94rem; line-height: 2.2; }
+.water-solution-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); padding: .8rem 1.1rem; border-radius: 10px; font-size: .82rem; }
+.water-solution-item strong { color: #e9c19d; }
+.water-solution-item span { color: rgba(255,255,255,0.7); }
 .water-aside { position: absolute; bottom: 3rem; left: clamp(1.25rem, 6vw, 7.5rem); display: grid; gap: .3rem; color: rgba(255,255,255,.57); }
 .water-aside span { color: #d9b18a; font-family: "Noto Kufi Arabic", sans-serif; font-size: 2.5rem; font-weight: 800; }
 .water-aside small { font-size: .62rem; line-height: 1.6; }
 
 .system-section { padding-top: clamp(6rem, 12vw, 12rem); padding-bottom: clamp(5rem, 10vw, 9rem); }
 .services-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; border-top: 1px solid var(--line); }
-.service-card { position: relative; min-height: 270px; padding: 1.35rem 1.1rem; border-bottom: 1px solid var(--line); transition: background-color 220ms ease, transform 220ms ease; }
+.service-card { position: relative; min-height: 270px; padding: 1.35rem 1.1rem; border-bottom: 1px solid var(--line); transition: background-color 220ms ease, transform 220ms ease; cursor: pointer; }
 .service-card + .service-card { border-right: 1px solid var(--line); }
 .service-card:hover { background: #eef1eb; transform: translateY(-4px); }
 .service-top { display: flex; align-items: start; justify-content: space-between; color: var(--copper); }
@@ -158,8 +193,15 @@ button { border: 0; }
 
 .cta-band { display: grid; grid-template-columns: 1.2fr .8fr; align-items: center; gap: 5rem; padding-top: clamp(5rem, 9vw, 8rem); padding-bottom: clamp(5rem, 9vw, 8rem); color: #fff; background: var(--falaj-deep); }
 .cta-band h2 { margin-bottom: 0; color: #f7f1e6; }
-.cta-copy { max-width: 380px; }
-.cta-copy p { color: rgba(255,255,255,.7); }
+.cta-copy { max-width: 440px; }
+.contact-form { display: grid; gap: 1rem; }
+.contact-form input, .contact-form textarea { width: 100%; padding: .85rem 1rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; color: #fff; font-size: .85rem; outline: none; }
+.contact-form input::placeholder, .contact-form textarea::placeholder { color: rgba(255,255,255,0.5); }
+.contact-form textarea { height: 110px; resize: none; }
+.success-msg { background: rgba(255,255,255,0.1); border: 1px solid #e9c19d; padding: 1.5rem; border-radius: 12px; }
+.success-msg strong { color: #e9c19d; font-family: "Noto Kufi Arabic", sans-serif; display: block; margin-bottom: .5rem; }
+.success-msg p { color: rgba(255,255,255,0.8); margin: 0; font-size: .85rem; }
+
 .primary-button--light { color: var(--falaj-deep); background: #e9c19d; border-color: #e9c19d; }
 .primary-button--light:hover { color: #fff; background: transparent; border-color: #e9c19d; }
 
@@ -178,6 +220,7 @@ button { border: 0; }
 @media (max-width: 900px) {
   .main-nav { gap: 1rem; }
   .hero-content { padding-top: 9rem; }
+  .royal-vision-badge { position: relative; top: auto; left: auto; width: 100%; margin: 2rem 1.5rem 0; transform: none; }
   .hero-stamp { top: 18%; left: 4%; transform: scale(.8) rotate(-12deg); }
   .manifesto { grid-template-columns: 1fr; gap: 1.5rem; }
   .manifesto-aside { display: block; }
@@ -198,29 +241,22 @@ button { border: 0; }
   .main-nav > a:not(.nav-contact)::after { display: none; }
   .nav-contact { justify-content: center; margin-top: .5rem; }
   .menu-toggle { display: inline-flex; align-items: center; justify-content: center; padding: .5rem; }
-  .hero { min-height: 760px; }
+  .hero { min-height: 840px; }
   .hero-image { background-position: 57% center; }
-  .hero-wash { background: linear-gradient(90deg, rgba(7,21,15,.87), rgba(11,28,20,.18)), linear-gradient(0deg, rgba(7,21,15,.84), transparent 65%); }
-  .hero-content { padding-bottom: 6.3rem; }
-  .hero h1 { font-size: clamp(3rem, 15vw, 5rem); }
+  .hero-content { padding-bottom: 3rem; }
+  .hero h1 { font-size: clamp(2.8rem, 13vw, 4.5rem); }
   .hero-intro { max-width: 340px; font-size: .86rem; }
+  .royal-vision-badge { width: calc(100% - 2rem); margin: 1.5rem 1rem 0; }
   .hero-stamp { top: 15%; left: -.5rem; transform: scale(.64) rotate(-12deg); }
   .hero-meta { font-size: .56rem; }
   .hero-actions { align-items: flex-start; flex-direction: column; gap: 1.1rem; }
   .manifesto-grid, .system-bottom, .cta-band { grid-template-columns: 1fr; }
-  .manifesto h2, .section-heading h2, .system-section h2, .cta-band h2 { font-size: clamp(2.5rem, 13vw, 4rem); }
-  .editorial-photo img { height: 350px; }
   .field-note { grid-template-columns: repeat(2, 1fr); gap: 1.2rem .8rem; }
   .field-note > div:not(.field-note-title) { padding-right: .8rem; }
   .field-note b { font-size: 1.5rem; }
   .field-note div span { font-size: .58rem; }
   .section-heading { align-items: flex-start; flex-direction: column; gap: 1.3rem; }
-  .atlas-evidence { grid-template-columns: 1fr auto; gap: .6rem; padding-right: 1rem; padding-left: 1rem; }
-  .atlas-evidence small { grid-column: 1 / -1; }
   .section-heading > p { margin: 0; }
-  .region-row { grid-template-columns: .35fr 1fr .25fr; gap: .65rem; min-height: 145px; }
-  .region-detail { display: none; }
-  .region-arrow { justify-self: start; }
   .water-section { min-height: 720px; }
   .water-visual { inset: 0; opacity: .42; }
   .water-section::after { inset: 0; background: linear-gradient(90deg, rgba(17,34,27,.96), rgba(17,34,27,.62)); }
@@ -234,8 +270,4 @@ button { border: 0; }
   .cta-band { gap: 2rem; }
   .footer-links { gap: 1rem; flex-direction: column; margin-top: 2.5rem; }
   .footer-bottom { align-items: flex-start; flex-direction: column; gap: .7rem; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
