@@ -1,5 +1,5 @@
 /*
- * Design system: سجلّ الواحة المعاصر + الهوية الرسمية لرؤية عُمان 2040 + MotionSites 3D.
+ * Design system: سجلّ الواحة المعاصر + الفلاتر + لوحة المشرفين + تنسيق الطباعة PDF.
  */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -44,7 +44,7 @@ button { border: 0; }
 .nav-contact:hover { color: var(--paper); background: var(--falaj); border-color: var(--falaj); }
 .menu-toggle { display: none; color: currentColor; background: transparent; cursor: pointer; }
 
-/* قسم الواجهة الرئيسية المستوحى من رؤية عُمان 2040 وموقع MotionSites 3D */
+/* القسم الرئيسي مع بطاقة 3D لصورة الكتاب والقهوة وشعار 2040 */
 .hero-vision-official { position: relative; min-height: 92vh; display: flex; align-items: center; color: #fff; background: var(--dark); isolation: isolate; padding-top: 6rem; padding-bottom: 6rem; }
 .hero-vision-bg, .hero-vision-overlay { position: absolute; inset: 0; z-index: -2; }
 .hero-vision-bg { background-position: center; background-size: cover; transform: scale(1.02); }
@@ -58,7 +58,6 @@ button { border: 0; }
 .hero-official-desc { max-width: 540px; color: rgba(255,255,255,0.8); font-size: 1.05rem; line-height: 2.1; margin-bottom: 2.2rem; }
 .hero-buttons { display: flex; gap: 1.2rem; align-items: center; }
 
-/* بطاقة ثلاثية الأبعاد MotionSites 3D للرؤية والسلطان */
 .motion-3d-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(213,164,119,0.35); border-radius: 28px; padding: 1.8rem; backdrop-filter: blur(16px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); transform: perspective(1000px) rotateY(-6deg) rotateX(4deg); transition: transform 0.4s ease; }
 .motion-3d-card:hover { transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.02); }
 .motion-3d-inner { display: grid; gap: 1.5rem; }
@@ -71,9 +70,13 @@ button { border: 0; }
 .motion-3d-brand img { width: 45px; height: 45px; object-fit: contain; }
 .motion-3d-brand span { color: #fff; font-family: "Noto Kufi Arabic", sans-serif; font-size: .85rem; font-weight: 700; }
 
-/* الخريطة التفاعلية ونوافذ التفاصيل */
+/* الفلاتر والخريطة */
 .interactive-map-section { padding-top: 6rem; padding-bottom: 6rem; background: var(--paper); }
-.map-interactive-container { margin-top: 3rem; }
+.filter-toolbar { display: flex; gap: 1.5rem; margin-top: 2rem; margin-bottom: 2.5rem; background: #fff; padding: 1.2rem 1.8rem; border: 1px solid var(--line); border-radius: 16px; flex-wrap: wrap; }
+.filter-group { display: flex; align-items: center; gap: .8rem; flex: 1; min-width: 240px; }
+.filter-group label { display: flex; align-items: center; gap: .4rem; color: var(--falaj-deep); font-size: .82rem; font-weight: 700; }
+.filter-group select { width: 100%; padding: .65rem .9rem; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); font-size: .85rem; outline: none; }
+
 .map-visual-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.8rem; }
 .map-pin-card { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 1.8rem; cursor: pointer; transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
 .map-pin-card:hover { transform: translateY(-5px); border-color: var(--falaj); box-shadow: 0 12px 32px rgba(31,90,69,0.12); }
@@ -84,7 +87,7 @@ button { border: 0; }
 .region-status-pill { display: inline-block; background: var(--falaj-soft); color: var(--falaj); padding: .3rem .8rem; border-radius: 999px; font-size: .7rem; font-weight: 600; }
 .pin-action { display: inline-block; color: var(--falaj); font-size: .8rem; font-weight: 700; }
 
-/* نافذة التفاصيل المنبثقة Modal */
+/* نافذة التفاصيل Modal */
 .region-modal-overlay { position: fixed; inset: 0; background: rgba(11,28,20,0.78); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
 .region-modal-content { background: var(--paper); width: min(100%, 820px); max-height: 90vh; border-radius: 28px; box-shadow: 0 25px 60px rgba(0,0,0,0.35); overflow-y: auto; position: relative; border: 1px solid var(--sand); }
 .modal-close-btn { position: absolute; top: 1.5rem; left: 1.5rem; background: #eef1eb; color: var(--ink); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 160ms ease; }
@@ -107,7 +110,7 @@ button { border: 0; }
 .modal-badge-row { display: flex; gap: 1rem; flex-wrap: wrap; }
 .modal-badge-row span { background: #eef1eb; color: var(--falaj); padding: .4rem .9rem; border-radius: 999px; font-size: .78rem; font-weight: 600; }
 
-/* قسم تحليل مؤشرات الأمن الغذائي من ملف الـ PDF */
+/* مؤشرات الأمن الغذائي */
 .food-security-section { padding-top: 6rem; padding-bottom: 6rem; background: #f2f5f1; }
 .metrics-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.8rem; margin-top: 3rem; }
 .security-metric-card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: grid; gap: 1.2rem; }
@@ -119,41 +122,26 @@ button { border: 0; }
 .metric-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: .78rem; color: var(--muted); }
 .metric-card-footer b { color: var(--ink); }
 
-/* بوابة إدارة النظام والصلاحيات */
-.admin-portal-section { padding-top: 6rem; padding-bottom: 6rem; background: var(--paper); }
-.portal-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 3rem; margin-top: 3rem; align-items: start; }
-.portal-info-box { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 2.5rem; }
-.portal-info-box h3 { color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.3rem; margin-top: 0; margin-bottom: 1.2rem; }
-.portal-rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; color: var(--muted); font-size: .9rem; line-height: 1.8; }
-.portal-form-container { background: var(--falaj-deep); color: #fff; border-radius: 24px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(17,34,27,0.2); }
-.contact-form { display: grid; gap: 1.2rem; }
-.contact-form h3 { margin: 0 0 .5rem; font-family: "Noto Kufi Arabic", sans-serif; color: #f2cca1; font-size: 1.3rem; }
-.contact-form input, .contact-form textarea, .portal-select { width: 100%; padding: .9rem 1.1rem; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #fff; font-size: .9rem; outline: none; }
-.portal-select option { background: var(--falaj-deep); color: #fff; }
-.contact-form input::placeholder, .contact-form textarea::placeholder { color: rgba(255,255,255,0.5); }
-.contact-form textarea { height: 120px; resize: none; }
-.success-msg { background: rgba(255,255,255,0.12); border: 1px solid #e9c19d; padding: 2rem; border-radius: 16px; text-align: center; }
-.success-msg strong { color: #e9c19d; font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.2rem; display: block; margin-bottom: .8rem; }
-.success-msg p { color: rgba(255,255,255,0.85); margin: 0; font-size: .95rem; }
+/* لوحة تحكم المشرفين */
+.admin-dashboard-section { padding-top: 6rem; padding-bottom: 6rem; background: var(--paper); }
+.admin-panel-box { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 2.5rem; margin-top: 2.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
+.admin-lock-banner { display: grid; grid-template-columns: auto 1fr auto; gap: 1.5rem; align-items: center; background: var(--falaj-soft); padding: 2rem; border-radius: 18px; border: 1px solid rgba(31,90,69,0.25); color: var(--falaj-deep); }
+.admin-lock-banner strong { display: block; font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.1rem; margin-bottom: .3rem; }
+.admin-lock-banner p { margin: 0; color: var(--muted); font-size: .85rem; }
+.admin-form h3 { margin-top: 0; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.3rem; margin-bottom: 1.5rem; }
+.admin-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+.admin-form label { display: block; color: var(--falaj-deep); font-size: .8rem; font-weight: 700; margin-bottom: .5rem; }
+.admin-form input, .admin-form select { width: 100%; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font-size: .9rem; outline: none; }
+.update-alert { background: var(--falaj-soft); color: var(--falaj); padding: 1rem 1.2rem; border-radius: 10px; font-weight: 700; margin-bottom: 1.5rem; border: 1px solid var(--falaj); }
 
 /* الأقسام العامة والتذييل */
 .section-label { display: flex; align-items: center; gap: .7rem; color: var(--copper); font-size: .7rem; letter-spacing: .15em; font-weight: 700; }
 .section-label span:first-child { font-family: "IBM Plex Sans Arabic", sans-serif; }
 .section-label i { display: inline-block; width: 38px; height: 1px; background: currentColor; }
-.manifesto { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(0, 4.3fr); gap: 4rem; padding-top: 6rem; padding-bottom: 6rem; }
-.manifesto-aside { display: flex; flex-direction: column; justify-content: space-between; }
-.vertical-note { writing-mode: vertical-rl; color: var(--muted); font-size: .7rem; letter-spacing: .12em; }
-.manifesto-main h2, .section-heading h2 { margin: 1.2rem 0 2.5rem; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: clamp(2.4rem, 4.5vw, 4.8rem); font-weight: 900; line-height: 1.25; }
-.manifesto-main h2 span, .section-heading h2 span { color: var(--copper); }
-.manifesto-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 4rem; align-items: end; }
-.manifesto-copy p { color: var(--muted); font-size: 1rem; line-height: 2.2; }
-.editorial-photo img { display: block; width: 100%; height: 420px; object-fit: cover; border-radius: 0 0 0 48px; filter: saturate(.85); }
-.editorial-photo figcaption { display: flex; justify-content: space-between; margin-top: .8rem; color: var(--muted); font-size: .7rem; }
-.editorial-photo figcaption span { color: var(--copper); }
 
 .primary-button { display: inline-flex; align-items: center; gap: .7rem; padding: .95rem 1.6rem; color: #fff; background: var(--falaj); border: 1px solid var(--falaj); border-radius: 999px; font-size: .85rem; font-weight: 700; transition: transform 160ms ease, background-color 180ms ease; cursor: pointer; }
 .primary-button:hover { background: var(--falaj-deep); transform: translateY(-2px); }
-.text-button { display: inline-flex; align-items: center; gap: .4rem; color: var(--ink); font-size: .85rem; font-weight: 700; transition: opacity 180ms ease; }
+.text-button { display: inline-flex; align-items: center; gap: .4rem; color: var(--ink); font-size: .85rem; font-weight: 700; transition: opacity 180ms ease; cursor: pointer; background: transparent; }
 .text-button:hover { opacity: .75; }
 
 .site-footer { padding-top: 4rem; padding-bottom: 2rem; background: #0f2119; color: rgba(255,255,255,.75); margin-top: 4rem; }
@@ -162,9 +150,15 @@ button { border: 0; }
 .footer-brand span { display: block; margin-top: .2rem; color: rgba(255,255,255,.45); font-size: .7rem; }
 .footer-bottom { display: flex; justify-content: space-between; margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.4); font-size: .65rem; }
 
+/* تنسيق الطباعة لتصدير PDF */
+@media print {
+  .site-header, .site-footer, .filter-toolbar, .admin-dashboard-section, .hero-vision-official { display: none !important; }
+  .food-security-section { background: #fff !important; padding: 0 !important; }
+  body { background: #fff !important; color: #000 !important; }
+}
+
 @media (max-width: 900px) {
-  .hero-vision-container, .portal-grid, .manifesto-grid { grid-template-columns: 1fr; }
+  .hero-vision-container, .admin-form-grid { grid-template-columns: 1fr; }
   .motion-3d-card { margin-top: 2rem; }
-  .manifesto { grid-template-columns: 1fr; }
-  .vertical-note { display: none; }
+  .admin-lock-banner { grid-template-columns: 1fr; text-align: center; }
 }
