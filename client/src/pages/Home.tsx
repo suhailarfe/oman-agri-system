@@ -5,6 +5,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
+import { sultanHaithamData, visionMarkData } from "@/attachedAssets";
 import {
   ArrowUpLeft,
   Droplets,
@@ -23,8 +24,8 @@ import {
 
 const assets = {
   hero: "/manus-storage/oman-oasis-hero-reference_def5e252.jpg",
-  sultanHaitham: "/home/ubuntu/upload/Sultan-Haitham-1.webp",
-  visionMark: "/manus-storage/oman-oasis-mark_f385a746.png",
+  sultanHaitham: sultanHaithamData,
+  visionMark: visionMarkData,
   about: "https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=1600&q=86",
   water: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=86",
 };
@@ -80,6 +81,15 @@ export default function Home() {
   const [editIrrigation, setEditIrrigation] = useState("");
   const [editStatus, setEditStatus] = useState("");
   const [updateMsg, setUpdateMsg] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactRegion, setContactRegion] = useState("najd");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSent, setContactSent] = useState(false);
+
+  const inquiryMutation = trpc.agri.registerInquiry.useMutation({
+    onSuccess: () => setContactSent(true),
+  });
 
   const updateRegionMutation = trpc.agri.updateRegionData.useMutation({
     onSuccess: (res) => {
@@ -428,6 +438,53 @@ export default function Home() {
                 </div>
                 <button type="submit" className="primary-button mt-4">
                   حفظ وتحديث البيانات فوراً في قاعدة البيانات
+                </button>
+              </form>
+            )}
+          </div>
+        </section>
+
+        {/* نافذة تواصل معنا: معلومات التواصل ونموذج الاستفسار */}
+        <section className="contact-section page-pad" id="contact">
+          <div className="contact-section-intro">
+            <SectionLabel number="04">تواصل معنا</SectionLabel>
+            <h2>نحوّل الفكرة<br /><span>إلى مشروع قابل للنمو.</span></h2>
+            <p>للاستفسارات حول الأراضي الزراعية، فرص الاستثمار، تحديثات الري، أو التعاون مع مشرفي المناطق، تواصل مع فريق المبادرة عبر القنوات التالية.</p>
+            <div className="contact-details">
+              <a href="mailto:suhailarfe@gmail.com">suhailarfe@gmail.com</a>
+              <a href="tel:+967736986271">+967 736 986 271</a>
+              <span>سلطنة عُمان — برنامج الأمن الغذائي والاستزراع الحكومي</span>
+            </div>
+          </div>
+          <div className="contact-form-card">
+            {contactSent ? (
+              <div className="contact-success">
+                <strong>تم استلام رسالتك بنجاح.</strong>
+                <p>حُفظ الاستفسار في سجل التواصل، وسيقوم فريق المبادرة بمراجعته.</p>
+              </div>
+            ) : (
+              <form className="contact-form" onSubmit={(event) => {
+                event.preventDefault();
+                inquiryMutation.mutate({
+                  name: contactName,
+                  email: contactEmail,
+                  regionCode: contactRegion,
+                  message: contactMessage || "طلب تواصل عام حول مبادرة الأمن الغذائي.",
+                });
+              }}>
+                <h3>أرسل استفسارك</h3>
+                <input required value={contactName} onChange={(event) => setContactName(event.target.value)} placeholder="الاسم الكامل أو اسم الجهة" />
+                <input required type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} placeholder="البريد الإلكتروني" />
+                <select value={contactRegion} onChange={(event) => setContactRegion(event.target.value)}>
+                  <option value="najd">النجد — ظفار</option>
+                  <option value="batinah">سهل الباطنة</option>
+                  <option value="dhahirah">الظاهرة</option>
+                  <option value="wusta">المنطقة الوسطى</option>
+                  <option value="jabal">الجبل الأخضر</option>
+                </select>
+                <textarea value={contactMessage} onChange={(event) => setContactMessage(event.target.value)} placeholder="اكتب رسالتك أو استفسارك هنا..." />
+                <button className="primary-button" type="submit" disabled={inquiryMutation.isPending}>
+                  {inquiryMutation.isPending ? "جارٍ الإرسال..." : "إرسال الرسالة"} <ExternalLink size={16} />
                 </button>
               </form>
             )}
