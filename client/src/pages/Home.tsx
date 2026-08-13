@@ -1,8 +1,10 @@
 /*
- * Design system: سجلّ الواحة المعاصر + نظام نوافذ تفاعلية + خريطة 3D واستكشاف مناطق عُمان.
- * يتضمن دمج صورة السلطان هيثم والشعار، نافذة تفصيلية لكل منطقة ومحور، وقاعدة بيانات داخلية للمشروع.
+ * Design system: سجلّ الواحة المعاصر + الهوية الرسمية لرؤية عُمان 2040 + مؤشرات الأمن الغذائي + نوافذ تفاعلية وقاعدة بيانات حية.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
 import {
   ArrowUpLeft,
   ChevronDown,
@@ -14,107 +16,29 @@ import {
   Mountain,
   Sprout,
   X,
-  Layers,
-  ShieldCheck,
   Compass,
+  ShieldCheck,
+  BarChart3,
+  UserCheck,
+  Lock,
 } from "lucide-react";
 
 const assets = {
   hero: "/manus-storage/oman-oasis-hero-reference_def5e252.jpg",
   sultanHaitham: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=86",
-  visionLogo: "/manus-storage/oman-oasis-mark_f385a746.png",
+  visionMark: "/manus-storage/oman-oasis-mark_f385a746.png",
   about: "https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=1600&q=86",
   water: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=86",
   fields: "https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=1400&q=86",
-  mark: "/manus-storage/oman-oasis-mark_f385a746.png",
 };
-
-function ArrowLink({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
-  return (
-    <a className={`arrow-link ${light ? "arrow-link--light" : ""}`} href={href}>
-      <span>{children}</span>
-      <ArrowUpLeft size={17} strokeWidth={1.6} />
-    </a>
-  );
-}
 
 const navItems = [
   { label: "عن المبادرة", href: "#about" },
   { label: "الخريطة التفاعلية", href: "#map-section" },
+  { label: "مؤشرات الأمن الغذائي", href: "#food-security" },
   { label: "المناطق", href: "#regions" },
   { label: "المياه", href: "#water" },
-  { label: "المنظومة", href: "#system" },
-];
-
-const regionsData = [
-  {
-    code: "najd",
-    number: "01",
-    name: "النجد — ظفار",
-    area: "40,000 كم² (~80% من ظفار)",
-    crop: "قمح استراتيجي، نخيل، أعلاف، ولبان",
-    water: "خزان جوفي ضخم + تحلية شمسية للطاقة المتجددة",
-    description: "بوابة الاكتفاء الذاتي الزراعي للسلطنة. تتميز بخصوبة الأراضي ووفرة مياه الخزان الجوفي، وأثبتت نجاحاً استثنائياً في زراعة القمح واللبان والبطيخ.",
-    details: "تعتبر النجد الشريان الأبرز لإنتاج الحبوب في سلطنة عُمان. تشمل خطط التنمية استصلاح آلاف الهكتارات وفق أنظمة ري محورات ذكية تقلل الفاقد المائي بنسبة تتجاوز 45%.",
-    metrics: { investment: "120 ألف ر.ع", capacity: "10,000 هكتار المرحلة الأولى", sustainability: "92%" }
-  },
-  {
-    code: "batinah",
-    number: "02",
-    name: "سهل الباطنة",
-    area: "الشريط الساحلي الشمالي الخصب",
-    crop: "خضروات طازجة (طماطم، خيار)، حمضيات، ومانجو",
-    water: "معالجة مياه الصرف الصحي + حصاد السدود",
-    description: "تاريخ عريق في الزراعة والخصوبة الساحلية. رغم تحديات تملح المياه، يجري إعادة تأهيل السهل عبر استنبات محاصيل متحملة للملوحة واستخدام المياه المعالجة متقدمة النقاء.",
-    details: "يغطي السهل الأسواق المحلية بأجود أنواع الحمضيات والخضروات، مدعوماً بشبكة نقل سريعة ومزارع محمية حديثة.",
-    metrics: { investment: "95 ألف ر.ع", capacity: "6,500 هكتار", sustainability: "85%" }
-  },
-  {
-    code: "dhahirah",
-    number: "03",
-    name: "محافظة الظاهرة",
-    area: "امتداد صحراوي شاسع ذو تربة رملية مواتية",
-    crop: "نخيل فاخر، محاصيل حقلية جافة، ونباتات طبية",
-    water: "زراعة مائية (Hydroponics) وبيوت محمية ذكية",
-    description: "بيئة صحراوية واعدة تم استغلالها عبر التقنيات الحديثة لإنتاج المحاصيل التي تتطلب استهلاكاً مائياً منخفضاً مع تحقيق عوائد استثمارية عالية.",
-    details: "تعتمد الظاهرة على أنظمة التحكم الآلي في المناخ الداخلي للبيوت المحمية، مما يوفر حتى 70% من المياه مقارنة بالزراعة التقليدية.",
-    metrics: { investment: "100 ألف ر.ع", capacity: "8,000 هكتار", sustainability: "89%" }
-  },
-  {
-    code: "wusta",
-    number: "04",
-    name: "المنطقة الوسطى",
-    area: "سهول واسعة مفتوحة غير مستغلة",
-    crop: "نباتات مقاومة للملوحة وأعلاف صحراوية",
-    water: "تحلية مياه بحر طاقية + آبار عميقة معالجة",
-    description: "محور التوسع الصحراوي المستقبلي، مجهزة لتكون حاضنة لمشاريع الابتكار الزراعي والأبحاث الحيوية تحت شمس عُمان.",
-    details: "تتيح المنطقة الوسطى مجالات هائلة لمشاريع الإنتاج الضخم بعيداً عن التكدس السكاني، مع ربط مباشر بموانئ التصدير.",
-    metrics: { investment: "150 ألف ر.ع", capacity: "15,000 هكتار", sustainability: "94%" }
-  },
-  {
-    code: "jabal",
-    number: "05",
-    name: "الجبل الأخضر",
-    area: "مدرجات جبلية باردة",
-    crop: "رمان، جوز، الورد الجبلي، وفواكه شبه استوائية",
-    water: "حصاد الضباب والأمطار + نظام فلج تقليدي مطور",
-    description: "أيقونة الزراعة الجبلية الفريدة في سلسلة جاهل الحجر، تشتهر بمدرجاتها التاريخية وإنتاجها العالي الجودة من الفواكه والعطور الطبيعية.",
-    details: "يتم دمج التراث الهندسي العُماني القديم للأفلاج مع أجهزة استشعار الرطوبة والري الحديث لضمان استدامة المدرجات.",
-    metrics: { investment: "50 ألف ر.ع", capacity: "1,200 هكتار", sustainability: "98%" }
-  }
-];
-
-const waterSolutionsList = [
-  { title: "التحلية بالطاقة الشمسية", category: "طاقة متجددة", description: "استغلال وفرة الإشعاع الشمسي لتحلية المياه المالحة مباشرة في مواقع المزارع النائية." },
-  { title: "مياه الصرف المعالجة ثلاثياً", category: "إعادة تدوير", description: "توجيه المياه المعالجة آمنة المعايير لري المحاصيل غير المباشرة والأعلاف." },
-  { title: "حصاد الضباب والأمطار", category: "موارد طبيعية", description: "التقاط الرطوبة العالية في المناطق الجبلية والساحلية عبر شباك وأحواض تجميع ذكية." },
-  { title: "أنظمة الري الحديثة والمحورية", category: "كفاءة حقلية", description: "تقليل الهدر بنسبة تتجاوز 50% عبر التقطير والري بالتنقيط المدار بالحاسوب." }
-];
-
-const seedSourcesList = [
-  { name: "مركز الأبحاث الزراعية (مورد)", origin: "سلطنة عُمان", description: "سلالات أصيلة متأقلمة تماماً مع المناخ العُماني." },
-  { name: "مركز ICARDA الدولي", origin: "شراكة إقليمية", description: "بذور محاصيل حقلية مقاومة للجفاف والملوحة." },
-  { name: "مؤسسة Baker Creek الطبيعية", origin: "دولية Non-GMO", description: "أصول بذور طبيعية نقية خالية من أي تعديل جيني." }
+  { label: "إدارة النظام", href: "#admin-portal" },
 ];
 
 function LogoMark() {
@@ -139,38 +63,57 @@ function SectionLabel({ number, children, dark = false }: { number: string; chil
   );
 }
 
+function ArrowLink({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
+  return (
+    <a className={`arrow-link ${light ? "arrow-link--light" : ""}`} href={href}>
+      <span>{children}</span>
+      <ArrowUpLeft size={17} strokeWidth={1.6} />
+    </a>
+  );
+}
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [selectedRegion, setSelectedRegion] = useState<typeof regionsData[0] | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "crops" | "water" | "metrics">("overview");
 
-  // Visitor form state
+  // جلب البيانات الحية من قاعدة البيانات عبر tRPC
+  const { data: regionsData, isLoading: regionsLoading } = trpc.agri.getRegions.useQuery();
+  const { data: foodSecurityMetrics } = trpc.agri.getFoodSecurityMetrics.useQuery();
+  const { data: currentUser } = trpc.auth.me.useQuery();
+
+  // نموذج تسجيل الزوار / المزارعين
   const [visitorName, setVisitorName] = useState("");
   const [visitorEmail, setVisitorEmail] = useState("");
   const [visitorMessage, setVisitorMessage] = useState("");
+  const [selectedRegionCode, setSelectedRegionCode] = useState("najd");
   const [formSubmitted, setFormSubmitted] = useState(false);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 36);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  const inquiryMutation = trpc.agri.registerInquiry.useMutation({
+    onSuccess: () => {
+      setFormSubmitted(true);
+    }
+  });
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!visitorName || !visitorEmail) return;
-    setFormSubmitted(true);
+    inquiryMutation.mutate({
+      name: visitorName,
+      email: visitorEmail,
+      regionCode: selectedRegionCode,
+      message: visitorMessage || "استفسار بخصوص إدارة الاستصلاح الزراعي ودعم الأمن الغذائي."
+    });
   };
 
   return (
     <div className="site-shell" dir="rtl">
       {/* شريط التنقل */}
-      <header className={`site-header ${scrolled ? "site-header--scrolled" : ""}`}>
+      <header className="site-header site-header--scrolled">
         <a className="brand" href="#top" aria-label="واحات ومزارع عمان — الرئيسية">
           <LogoMark />
           <span className="brand-copy">
-            <strong>واحات ومزارع</strong>
+            <strong>واحات ومزارع عُمان</strong>
             <small>رؤية عُمان <b>2040</b></small>
           </span>
         </a>
@@ -178,116 +121,102 @@ export default function Home() {
           {navItems.map((item) => (
             <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
           ))}
-          <a className="nav-contact" href="#contact" onClick={() => setMenuOpen(false)}>تواصل معنا <ArrowUpLeft size={14} /></a>
+          {currentUser ? (
+            <span className="user-badge-pill">👤 {currentUser.name || currentUser.email} ({currentUser.role})</span>
+          ) : (
+            <button className="nav-contact" onClick={() => startLogin()}>تسجيل الدخول <UserCheck size={14} /></button>
+          )}
         </nav>
-        <button className="menu-toggle" aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"} onClick={() => setMenuOpen((open) => !open)}>
+        <button className="menu-toggle" aria-label="فتح القائمة" onClick={() => setMenuOpen(!menuOpen)}>
           {menuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </header>
 
       <main id="top">
-        {/* القسم الرئيسي مع دمج جلالة السلطان وشعار رؤية 2040 بتصميم 3D وتفاعلي */}
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="hero-image" style={{ backgroundImage: `url(${assets.hero})` }} />
-          <div className="hero-wash" />
-          
-          <div className="hero-content page-pad">
-            <div className="hero-kicker">
-              <span className="kicker-line" /> 
-              <span>مشروع وطني للأمن الغذائي والزراعي</span>
-            </div>
-            
-            <h1 id="hero-title">
-              من أرضٍ<br />
-              <em>غير مستغلة</em><br />
-              إلى أثرٍ يُرى.
-            </h1>
-            
-            <p className="hero-intro">
-              بناءً على التوجيهات السامية وتطلعات رؤية عُمان 2040 للأمن الغذائي، نحول الأراضي الحكومية إلى واحات زراعية مستدامة.
-            </p>
+        {/* القسم الرئيسي المستوحى من الموقع الرسمي لرؤية 2040 Motionsites 3D */}
+        <section className="hero-vision-official" aria-labelledby="hero-title">
+          <div className="hero-vision-bg" style={{ backgroundImage: `url(${assets.hero})` }} />
+          <div className="hero-vision-overlay" />
 
-            <div className="hero-actions">
-              <a className="primary-button" href="#map-section">
-                الخريطة التفاعلية للمناطق <Compass size={17} />
-              </a>
-              <a className="text-button" href="#about">
-                تفاصيل المبادرة <ChevronDown size={16} />
-              </a>
-            </div>
-          </div>
-
-          {/* عنصر بصري 3D فريد يدمج صورة جلالة السلطان هيثم مع شعار 2040 */}
-          <div className="royal-vision-badge">
-            <div className="royal-badge__inner">
-              <div className="royal-badge__portrait">
-                <img src="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80" alt="السلطان هيثم بن طارق" />
+          <div className="hero-vision-container page-pad">
+            <div className="hero-vision-content">
+              <div className="vision-badge-header">
+                <img src={assets.visionMark} alt="شعار رؤية عمان 2040" className="vision-official-mark" />
+                <span>برنامج الأمن الغذائي والاستزراع الحكومي</span>
               </div>
-              <div className="royal-badge__logo-box">
-                <img src={assets.visionLogo} alt="شعار رؤية عمان 2040" />
-                <span>رؤية عُمان 2040</span>
+              <h1 id="hero-title">
+                نحو مستقبل زراعي مستدام<br />
+                <em>برؤية عُمان 2040</em>
+              </h1>
+              <p className="hero-official-desc">
+                استغلال الأراضي الحكومية الواعدة، توظيف التقنيات الحديثة، وتحقيق الأمن الغذائي المستدام تحت التوجيهات السامية لحضرة صاحب الجلالة السلطان هيثم بن طارق المعظم.
+              </p>
+              <div className="hero-buttons">
+                <a className="primary-button" href="#map-section">
+                  الخريطة التفاعلية الحية <Compass size={17} />
+                </a>
+                <a className="text-button text-white" href="#food-security">
+                  تحليلات الأمن الغذائي (PDF) <BarChart3 size={16} />
+                </a>
               </div>
             </div>
-          </div>
 
-          <div className="hero-meta page-pad">
-            <span>سلطنة عُمان</span>
-            <span>الأرض · الماء · الاستدامة</span>
-          </div>
-          <div className="hero-stamp" aria-hidden="true">
-            <span>Oman</span><b>2040</b>
-            <small>Food security<br />&amp; sustainable agriculture</small>
+            {/* بطاقة 3D Cinematic دمج صورة السلطان والشعار الرسمي مستوحاة من MotionSites */}
+            <div className="motion-3d-card">
+              <div className="motion-3d-inner">
+                <div className="motion-3d-image">
+                  <img src={assets.sultanHaitham} alt="المقام السامي لحضرة صاحب الجلالة السلطان هيثم بن طارق المعظم" />
+                  <div className="motion-3d-caption">
+                    <strong>حضرة صاحب الجلالة</strong>
+                    <span>السلطان هيثم بن طارق المعظم حفظه الله ورعاه</span>
+                  </div>
+                </div>
+                <div className="motion-3d-brand">
+                  <img src={assets.visionMark} alt="شعار 2040" />
+                  <span>سلطنة عُمان — نحو الأفق</span>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* قسم الخريطة التفاعلية واستكشاف المواقع */}
+        {/* قسم الخريطة التفاعلية الحية المرتبطة بقاعدة البيانات */}
         <section className="interactive-map-section page-pad" id="map-section">
           <div className="section-heading">
             <div>
-              <SectionLabel number="01">خريطة عُمان التفاعلية</SectionLabel>
-              <h2>استكشف مواقع<br /><span>الواحات والمزارع.</span></h2>
+              <SectionLabel number="01">الخريطة الحية للتوسع الزراعي</SectionLabel>
+              <h2>استكشاف الواحات<br /><span>عبر قاعدة البيانات.</span></h2>
             </div>
-            <p>انقر على أي منطقة من مناطق المبادرة أدناه أو على الخريطة لفتح نافذة التفاصيل الكاملة والمحاصيل وأنظمة الري ودراسة الجدوى.</p>
+            <p>يتم جلب البيانات الحية أدناه مباشرة من قاعدة البيانات الوثائقية للمشروع. انقر على أي منطقة لعرض نافذة التفاصيل والمحاصيل والحلول المائية.</p>
           </div>
 
-          <div className="map-interactive-container">
-            <div className="map-visual-grid">
-              {regionsData.map((reg) => (
-                <div 
-                  key={reg.code} 
-                  className={`map-pin-card ${selectedRegion?.code === reg.code ? 'active' : ''}`}
-                  onClick={() => setSelectedRegion(reg)}
-                >
-                  <div className="pin-card-header">
-                    <span className="pin-number">{reg.number}</span>
-                    <MapPin size={18} className="pin-icon" />
+          {regionsLoading ? (
+            <div className="text-center py-12 text-muted">جاري تحميل بيانات الواحات والمزارع من قاعدة البيانات...</div>
+          ) : (
+            <div className="map-interactive-container">
+              <div className="map-visual-grid">
+                {regionsData?.map((reg) => (
+                  <div 
+                    key={reg.code} 
+                    className="map-pin-card"
+                    onClick={() => setSelectedRegion(reg)}
+                  >
+                    <div className="pin-card-header">
+                      <span className="pin-number">{reg.number}</span>
+                      <MapPin size={18} className="pin-icon" />
+                    </div>
+                    <h3>{reg.name}</h3>
+                    <p>{reg.area}</p>
+                    <div className="region-status-pill">{reg.status}</div>
+                    <span className="pin-action mt-3 inline-block">فتح النافذة التفصيلية ←</span>
                   </div>
-                  <h3>{reg.name}</h3>
-                  <p>{reg.area}</p>
-                  <span className="pin-action">عرض النافذة التفاعلية ←</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="map-preview-banner">
-              <div className="map-preview-text">
-                <Compass size={24} className="animate-spin-slow" />
-                <div>
-                  <strong>انقر على أي منطقة لاستعراض ملفها المتكامل</strong>
-                  <p>البيانات مرتبطة بقاعدة بيانات المشروع المحدثة وفقاً لدراسة 2040.</p>
-                </div>
+                ))}
               </div>
-              <button 
-                className="primary-button"
-                onClick={() => setSelectedRegion(regionsData[0])}
-              >
-                فتح نافذة منطقة النجد فوراً
-              </button>
             </div>
-          </div>
+          )}
         </section>
 
-        {/* نافذة التفاصيل المنبثقة (Modal) لأي منطقة يتم النقر عليها */}
+        {/* نافذة التفاصيل التفاعلية لكل منطقة */}
         {selectedRegion && (
           <div className="region-modal-overlay" onClick={() => setSelectedRegion(null)}>
             <div className="region-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -296,62 +225,60 @@ export default function Home() {
               </button>
 
               <div className="modal-header">
-                <span className="modal-kicker">نافذة تفصيلية — منطقة واعدة</span>
+                <span className="modal-kicker">نافذة المنطقة الزراعية — قاعدة البيانات</span>
                 <h2>{selectedRegion.name}</h2>
-                <p className="modal-sub">{selectedRegion.area}</p>
+                <p className="modal-sub">{selectedRegion.area} | المشرف المسؤول: <b>{selectedRegion.supervisor}</b></p>
               </div>
 
               <div className="modal-tabs">
-                <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>نظرة عامة</button>
+                <button className={activeTab === 'overview' ? 'active' : ''} onClick={() => setActiveTab('overview')}>النظرة الاستراتيجية</button>
                 <button className={activeTab === 'crops' ? 'active' : ''} onClick={() => setActiveTab('crops')}>المحاصيل المقترحة</button>
-                <button className={activeTab === 'water' ? 'active' : ''} onClick={() => setActiveTab('water')}>حلول المياه</button>
+                <button className={activeTab === 'water' ? 'active' : ''} onClick={() => setActiveTab('water')}>الأنظمة المائية</button>
                 <button className={activeTab === 'metrics' ? 'active' : ''} onClick={() => setActiveTab('metrics')}>مؤشرات الاستثمار</button>
               </div>
 
               <div className="modal-body">
                 {activeTab === 'overview' && (
                   <div className="tab-pane">
-                    <p><strong>الوصف الاستراتيجي:</strong> {selectedRegion.description}</p>
-                    <p className="mt-4"><strong>التفاصيل التنفيذية:</strong> {selectedRegion.details}</p>
+                    <p><strong>الوصف التحليلي:</strong> {selectedRegion.description}</p>
+                    <p className="mt-4"><strong>الخطة التنفيذية 2040:</strong> {selectedRegion.details}</p>
                     <div className="modal-badge-row mt-6">
-                      <span>✓ معتمد ضمن رؤية عُمان 2040</span>
-                      <span>✓ أراضي حكومية غير مستغلة</span>
+                      <span>الحالة التشغيلية: {selectedRegion.status}</span>
+                      <span>المشرف: {selectedRegion.supervisor}</span>
                     </div>
                   </div>
                 )}
 
                 {activeTab === 'crops' && (
                   <div className="tab-pane">
-                    <h3>المحاصيل الأساسية المدعومة:</h3>
+                    <h3>المحاصيل المعتمدة في قاعدة البيانات:</h3>
                     <div className="crop-highlight-box">
                       <Sprout size={22} />
                       <strong>{selectedRegion.crop}</strong>
                     </div>
-                    <p className="mt-4">تخضع هذه المحاصيل لاختبارات جودة صارمة لضمان الحد الأقصى من القيمة الغذائية وملاءمتها لطبيعة التربة المحلية.</p>
                   </div>
                 )}
 
                 {activeTab === 'water' && (
                   <div className="tab-pane">
-                    <h3>استراتيجية الموارد المائية:</h3>
+                    <h3>موارد وحلول المياه المخصصة:</h3>
                     <div className="water-highlight-box">
                       <Droplets size={22} />
                       <strong>{selectedRegion.water}</strong>
                     </div>
-                    <p className="mt-4">تطبيق أحدث تقنيات الترشيد والتحلية المتجددة لضمان عدم استنزاف المخزون الجوفي الاستراتيجي.</p>
                   </div>
                 )}
 
                 {activeTab === 'metrics' && (
                   <div className="tab-pane">
-                    <h3>مؤشرات الأداء وجدوى المشروع:</h3>
+                    <h3>مؤشرات الجدوى والأداء:</h3>
                     <div className="metrics-grid">
                       <div className="metric-box">
-                        <span>الاستثمار المبدئي</span>
+                        <span>الاستثمار المقدر</span>
                         <strong>{selectedRegion.metrics.investment}</strong>
                       </div>
                       <div className="metric-box">
-                        <span>السعة المقترحة</span>
+                        <span>السعة المكانية</span>
                         <strong>{selectedRegion.metrics.capacity}</strong>
                       </div>
                       <div className="metric-box">
@@ -364,16 +291,46 @@ export default function Home() {
               </div>
 
               <div className="modal-footer">
-                <button className="primary-button" onClick={() => setSelectedRegion(null)}>إغلاق النافذة والعودة للخريطة</button>
+                <button className="primary-button" onClick={() => setSelectedRegion(null)}>إغلاق النافذة</button>
               </div>
             </div>
           </div>
         )}
 
+        {/* قسم جديد: تحليل مؤشرات الأمن الغذائي استناداً إلى ملف الـ PDF */}
+        <section className="food-security-section page-pad" id="food-security">
+          <div className="section-heading">
+            <div>
+              <SectionLabel number="02">تحليل وثيقة الـ PDF</SectionLabel>
+              <h2>مؤشرات الأمن الغذائي<br /><span>لسلطنة عُمان 2040.</span></h2>
+            </div>
+            <p>مستخرج مباشرة من دراسة المناطق الزراعية الحكومية غير المستغلة ومستهدفات الاكتفاء الذاتي.</p>
+          </div>
+
+          <div className="metrics-cards-grid">
+            {foodSecurityMetrics?.selfSufficiencyGoals.map((goal, idx) => (
+              <div className="security-metric-card" key={idx}>
+                <div className="metric-card-top">
+                  <ShieldCheck size={24} className="text-copper" />
+                  <span className="target-badge">هدف 2040: {goal.target}</span>
+                </div>
+                <h3>{goal.crop}</h3>
+                <div className="progress-bar-container">
+                  <div className="progress-fill" style={{ width: goal.current }} />
+                </div>
+                <div className="metric-card-footer">
+                  <span>النسبة الحالية: <b>{goal.current}</b></span>
+                  <small>{goal.status}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* قسم عن المبادرة */}
         <section className="manifesto page-pad" id="about">
           <div className="manifesto-aside">
-            <SectionLabel number="02">عن المبادرة</SectionLabel>
+            <SectionLabel number="03">عن المبادرة</SectionLabel>
             <span className="vertical-note">ملف الأرض / ٢٠٤٠</span>
           </div>
           <div className="manifesto-main">
@@ -383,115 +340,90 @@ export default function Home() {
               <div className="manifesto-copy">
                 <p>انطلاقاً من رؤية عُمان 2040، نستثمر الأراضي الزراعية الحكومية غير المستغلة عبر نظام متكامل يربط الماء والبذر والمعرفة والبيانات ببعضها البعض.</p>
                 <p>النظام المرفق بالدراسة يقدم حلولاً شاملة تشمل 5 مناطق واعدة، 6 حلول مائية مبتكرة، ومصادر بذور Non-GMO آمنة.</p>
-                <ArrowLink href="#system">استكشف النظام البرمجي</ArrowLink>
               </div>
               <figure className="editorial-photo">
                 <img src={assets.about} alt="واحة عُمانية وقناة فلج" />
-                <figcaption><span>02</span> الماء يجد طريقه دائماً في عُمان</figcaption>
+                <figcaption><span>03</span> الماء يجد طريقه دائماً في عُمان</figcaption>
               </figure>
             </div>
           </div>
         </section>
 
-        {/* شريط الإحصائيات */}
-        <section className="field-note page-pad" aria-label="بيانات المشروع">
-          <div className="field-note-title"><span className="field-mark">⌁</span><span>ملف الأرقام</span></div>
-          <div><b>٥</b><span>مناطق زراعية<br />واعدة</span></div>
-          <div><b>٦</b><span>حلول مائية<br />مبتكرة</span></div>
-          <div><b>١٠٠</b><span>هكتار<br />لنموذج الرائد</span></div>
-          <div><b>٣١٥K</b><span>ريال عُماني<br />تكلفة تقديرية</span></div>
-        </section>
-
-        {/* قسم حلول المياه */}
-        <section className="water-section" id="water">
-          <div className="water-visual" style={{ backgroundImage: `url(${assets.water})` }} />
-          <div className="water-content page-pad">
-            <SectionLabel number="03" dark>الماء</SectionLabel>
-            <h2>لا نبحث عن<br /><em>ماءٍ أكثر.</em><br />بل عن هدرٍ أقل.</h2>
-            <p>من التحلية الشمسية إلى إعادة استخدام المياه المعالجة وحصاد الضباب والأمطار، نبني علاقة عملية بين كل قطرة وكل محصول.</p>
-            <div className="mt-6 flex flex-col gap-3">
-              {waterSolutionsList.map((sol, idx) => (
-                <div key={idx} className="water-solution-item">
-                  <strong>{sol.title}</strong> — <span>{sol.description}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="water-aside"><span>06</span><small>حلول مائية<br />مبتكرة</small></div>
-        </section>
-
-        {/* قسم المنظومة والخدمات */}
-        <section className="system-section page-pad" id="system">
+        {/* قسم إدارة النظام والصلاحيات (المزارعين والمشرفين) */}
+        <section className="admin-portal-section page-pad" id="admin-portal">
           <div className="section-heading">
             <div>
-              <SectionLabel number="04">المنظومة</SectionLabel>
-              <h2>خمسة مسارات،<br /><span>دورة واحدة.</span></h2>
+              <SectionLabel number="04">بوابة المزارعين والمشرفين</SectionLabel>
+              <h2>إدارة الصلاحيات<br /><span>وقاعدة البيانات.</span></h2>
             </div>
-            <p>النظام البرمجي وقاعدة البيانات يربطان القرارات اليومية بقصة الماء والمحصول والسوق.</p>
+            <p>سجل اهتمامك أو تواصل مع إدارة المشروع. يتم حفظ البيانات في جدول الزوار والمزارعين بقاعدة البيانات.</p>
           </div>
-          <div className="services-grid">
-            {regionsData.slice(0, 4).map((reg) => (
-              <article className="service-card" key={reg.code} onClick={() => setSelectedRegion(reg)}>
-                <div className="service-top">
-                  <span>{reg.number}</span>
-                  <Leaf size={23} strokeWidth={1.4} />
-                </div>
-                <h3>{reg.name}</h3>
-                <p>{reg.description}</p>
-                <div className="service-trace" aria-hidden="true" />
-                <ArrowUpLeft className="service-arrow" size={18} />
-              </article>
-            ))}
-          </div>
-          <div className="system-bottom">
-            <div className="system-quote">
-              «حين تتصل البيانات بالأرض،<br />
-              <em>تصبح القرارات أقدر على النمو.</em>»
-            </div>
-            <div className="system-image">
-              <img src={assets.fields} alt="شتلات خضراء في مشتل زراعي عُماني" />
-            </div>
-          </div>
-        </section>
 
-        {/* قسم التواصل وقاعدة البيانات (نموذج تسجيل الزوار) */}
-        <section className="cta-band page-pad" id="contact">
-          <div>
-            <SectionLabel number="05" dark>التواصل والمشاركة</SectionLabel>
-            <h2>سجل اهتمامك<br /><span>بمشاريع 2040.</span></h2>
-          </div>
-          <div className="cta-copy">
-            {formSubmitted ? (
-              <div className="success-msg">
-                <strong>شكراً لك! تم حفظ بياناتك في قاعدة بيانات النظام بنجاح.</strong>
-                <p>سنتواصل معك قريباً عبر البريد الإلكتروني.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleFormSubmit} className="contact-form">
-                <input 
-                  type="text" 
-                  placeholder="الاسم الكامل" 
-                  value={visitorName} 
-                  onChange={(e) => setVisitorName(e.target.value)} 
-                  required 
-                />
-                <input 
-                  type="email" 
-                  placeholder="البريد الإلكتروني" 
-                  value={visitorEmail} 
-                  onChange={(e) => setVisitorEmail(e.target.value)} 
-                  required 
-                />
-                <textarea 
-                  placeholder="رسالتك أو استفسارك حول الاستثمار الزراعي..." 
-                  value={visitorMessage} 
-                  onChange={(e) => setVisitorMessage(e.target.value)} 
-                />
-                <button type="submit" className="primary-button primary-button--light">
-                  حفظ في قاعدة البيانات <ExternalLink size={16} />
+          <div className="portal-grid">
+            <div className="portal-info-box">
+              <h3>صلاحيات النظام المتاحة:</h3>
+              <ul className="portal-rules">
+                <li>🌾 <b>المزارعون:</b> استعراض المحاصيل، طلب الدعم الفني، ومتابعة إحصاءات الري.</li>
+                <li>🛡️ <b>المشرفون:</b> إدارة بيانات المناطق الزراعية، تحديث المؤشرات، ومراجعة طلبات الاستثمار.</li>
+                <li>📊 <b>الإدارة العليا:</b> متابعة تقارير الأمن الغذائي والربط مع مستهدفات رؤية 2040.</li>
+              </ul>
+              {currentUser ? (
+                <div className="mt-6 p-4 bg-falaj-soft rounded-xl">
+                  <p>أنت مسجل الدخول حالياً باسم: <b>{currentUser.name}</b></p>
+                  <p className="text-xs text-muted mt-1">الدور: <code>{currentUser.role}</code></p>
+                </div>
+              ) : (
+                <button className="primary-button mt-6" onClick={() => startLogin()}>
+                  تسجيل الدخول الآمن عبر منصة عُمان <UserCheck size={16} />
                 </button>
-              </form>
-            )}
+              )}
+            </div>
+
+            <div className="portal-form-container">
+              {formSubmitted ? (
+                <div className="success-msg">
+                  <strong>تم الحفظ في قاعدة البيانات بنجاح!</strong>
+                  <p>{inquiryMutation.data?.message}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleFormSubmit} className="contact-form">
+                  <h3>طلب انضمام أو استفسار زراعي</h3>
+                  <input 
+                    type="text" 
+                    placeholder="الاسم الكامل أو اسم المزرعة" 
+                    value={visitorName} 
+                    onChange={(e) => setVisitorName(e.target.value)} 
+                    required 
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="البريد الإلكتروني الرسمي" 
+                    value={visitorEmail} 
+                    onChange={(e) => setVisitorEmail(e.target.value)} 
+                    required 
+                  />
+                  <select 
+                    value={selectedRegionCode} 
+                    onChange={(e) => setSelectedRegionCode(e.target.value)}
+                    className="portal-select"
+                  >
+                    <option value="najd">منطقة النجد — ظفار</option>
+                    <option value="batinah">سهل الباطنة</option>
+                    <option value="dhahirah">محافظة الظاهرة</option>
+                    <option value="wusta">المنطقة الوسطى</option>
+                    <option value="jabal">الجبل الأخضر</option>
+                  </select>
+                  <textarea 
+                    placeholder="تفاصيل المشروع الزراعي أو الاستفسار..." 
+                    value={visitorMessage} 
+                    onChange={(e) => setVisitorMessage(e.target.value)} 
+                  />
+                  <button type="submit" className="primary-button">
+                    إرسال وحفظ في قاعدة البيانات <ExternalLink size={16} />
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </section>
       </main>
@@ -503,11 +435,6 @@ export default function Home() {
             <strong>واحات ومزارع عُمان</strong>
             <span>رؤية 2040 للأمن الغذائي والزراعي</span>
           </div>
-        </div>
-        <div className="footer-links">
-          <a href="mailto:suhailarfe@gmail.com">suhailarfe@gmail.com</a>
-          <a href="tel:00967736986271">00967 736 986 271</a>
-          <a href="https://github.com/suhailarfe/oman-agri-system" target="_blank" rel="noreferrer">المستودع البرمجي <ExternalLink size={14} /></a>
         </div>
         <div className="footer-bottom">
           <span>صنع في عُمان · ٢٠٢٦</span>
