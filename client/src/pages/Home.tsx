@@ -23,8 +23,7 @@ import {
 
 const assets = {
   hero: "/manus-storage/oman-oasis-hero-reference_def5e252.jpg",
-  // إعادة صورة جلالة السلطان المعظم إلى بطاقة العرض الرئيسية
-  sultanHaitham: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=1200&q=86",
+  sultanHaitham: "/home/ubuntu/upload/Sultan-Haitham-1.webp",
   visionMark: "/manus-storage/oman-oasis-mark_f385a746.png",
   about: "https://images.unsplash.com/photo-1500076656116-558758c991c1?auto=format&fit=crop&w=1600&q=86",
   water: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=86",
