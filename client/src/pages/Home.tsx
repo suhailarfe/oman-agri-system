@@ -86,9 +86,18 @@ export default function Home() {
   const [contactRegion, setContactRegion] = useState("najd");
   const [contactMessage, setContactMessage] = useState("");
   const [contactSent, setContactSent] = useState(false);
+  const [contactError, setContactError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   const inquiryMutation = trpc.agri.registerInquiry.useMutation({
-    onSuccess: () => setContactSent(true),
+    onSuccess: () => {
+      setContactSent(true);
+      setContactError("");
+    },
+    onError: (err) => {
+      setContactError(err.message || "حدث خطأ أثناء إرسال الاستفسار. يرجى المحاولة لاحقاً.");
+    }
   });
 
   const updateRegionMutation = trpc.agri.updateRegionData.useMutation({
@@ -464,10 +473,30 @@ export default function Home() {
               <div className="contact-success">
                 <strong>تم استلام رسالتك بنجاح.</strong>
                 <p>حُفظ الاستفسار في سجل التواصل، وسيقوم فريق المبادرة بمراجعته.</p>
+                <button className="text-button text-falaj mt-4 underline text-xs" onClick={() => { setContactSent(false); setContactName(""); setContactEmail(""); setContactMessage(""); }}>إرسال استفسار جديد</button>
               </div>
             ) : (
               <form className="contact-form" onSubmit={(event) => {
                 event.preventDefault();
+                let hasError = false;
+                if (!contactName.trim()) {
+                  setNameError("حقل الاسم الكامل مطلوب.");
+                  hasError = true;
+                } else {
+                  setNameError("");
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!contactEmail.trim() || !emailRegex.test(contactEmail)) {
+                  setEmailError("يرجى إدخال بريد إلكتروني صحيح (مثال: name@domain.com).");
+                  hasError = true;
+                } else {
+                  setEmailError("");
+                }
+                if (hasError) {
+                  setContactError("يرجى تصحيح الأخطاء أدناه قبل المتابعة.");
+                  return;
+                }
+                setContactError("");
                 inquiryMutation.mutate({
                   name: contactName,
                   email: contactEmail,
@@ -476,17 +505,28 @@ export default function Home() {
                 });
               }}>
                 <h3>أرسل استفسارك</h3>
-                <input required value={contactName} onChange={(event) => setContactName(event.target.value)} placeholder="الاسم الكامل أو اسم الجهة" />
-                <input required type="email" value={contactEmail} onChange={(event) => setContactEmail(event.target.value)} placeholder="البريد الإلكتروني" />
-                <select value={contactRegion} onChange={(event) => setContactRegion(event.target.value)}>
-                  <option value="najd">النجد — ظفار</option>
-                  <option value="batinah">سهل الباطنة</option>
-                  <option value="dhahirah">الظاهرة</option>
-                  <option value="wusta">المنطقة الوسطى</option>
-                  <option value="jabal">الجبل الأخضر</option>
-                </select>
-                <textarea value={contactMessage} onChange={(event) => setContactMessage(event.target.value)} placeholder="اكتب رسالتك أو استفسارك هنا..." />
-                <button className="primary-button" type="submit" disabled={inquiryMutation.isPending}>
+                {contactError && <div className="contact-error-alert text-xs bg-red-500/20 border border-red-500 text-white p-2.5 rounded-lg mb-3">{contactError}</div>}
+                <div className="mb-3">
+                  <input value={contactName} onChange={(event) => { setContactName(event.target.value); if(event.target.value.trim()) setNameError(""); }} placeholder="الاسم الكامل أو اسم الجهة (مطلوب)" />
+                  {nameError && <span className="text-xs text-red-300 mt-1 block">{nameError}</span>}
+                </div>
+                <div className="mb-3">
+                  <input type="email" value={contactEmail} onChange={(event) => { setContactEmail(event.target.value); if(event.target.value.includes("@")) setEmailError(""); }} placeholder="البريد الإلكتروني (مطلوب)" />
+                  {emailError && <span className="text-xs text-red-300 mt-1 block">{emailError}</span>}
+                </div>
+                <div className="mb-3">
+                  <select value={contactRegion} onChange={(event) => setContactRegion(event.target.value)}>
+                    <option value="najd">النجد — ظفار</option>
+                    <option value="batinah">سهل الباطنة</option>
+                    <option value="dhahirah">الظاهرة</option>
+                    <option value="wusta">المنطقة الوسطى</option>
+                    <option value="jabal">الجبل الأخضر</option>
+                  </select>
+                </div>
+                <div className="mb-4">
+                  <textarea value={contactMessage} onChange={(event) => setContactMessage(event.target.value)} placeholder="اكتب رسالتك أو استفسارك هنا (اختياري)..." />
+                </div>
+                <button className="primary-button w-full justify-center" type="submit" disabled={inquiryMutation.isPending}>
                   {inquiryMutation.isPending ? "جارٍ الإرسال..." : "إرسال الرسالة"} <ExternalLink size={16} />
                 </button>
               </form>
