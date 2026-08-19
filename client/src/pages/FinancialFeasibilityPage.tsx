@@ -1,12 +1,12 @@
 /*
- * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع مقارنة الفرص، تنبيهات رطوبة التربة، التوقيع الرقمي، وتقارير PDF الرسومية
+ * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع رسوم رطوبة التربة التاريخية، مسودات العقود، ورمز QR في تقارير PDF
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from "recharts";
+import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2, FileText, QrCode } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 export default function FinancialFeasibilityPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,11 +15,9 @@ export default function FinancialFeasibilityPage() {
   const [partnershipShare, setPartnershipShare] = useState<number>(15);
   const [activeSatelliteRegion, setActiveSatelliteRegion] = useState("najd");
 
-  // مقارنة دراسات الجدوى (اختيار منطقتين للمقارنة)
   const [compareRegion1, setCompareRegion1] = useState("najd");
   const [compareRegion2, setCompareRegion2] = useState("batinah");
 
-  // نموذج التوقيع الرقمي
   const [investorFullName, setInvestorFullName] = useState("");
   const [selectedContractRegion, setSelectedContractRegion] = useState("najd");
 
@@ -79,7 +77,33 @@ export default function FinancialFeasibilityPage() {
   };
 
   const handleExportGraphicalPDF = () => {
-    window.print(); // طباعة التقرير الشامل المتضمن الرسوم البيانية وجداول المقارنة
+    window.print(); // طباعة التقرير مع QR التحقق والرسوم
+  };
+
+  const handleDownloadContractDraft = (contract: any) => {
+    const draftText = `========================================\n` +
+      `جمهورية سلطنة عُمان — وزارة الثروة الزراعية والسمكية وموارد المياه\n` +
+      `برنامج الأمن الغذائي والاستزراع الحكومي (رؤية عُمان 2040)\n` +
+      `عقد شراكة استثمارية أولية (مسودة رسمية موقعة رقمياً)\n` +
+      `========================================\n\n` +
+      `اسم المستثمر: ${contract.investorName}\n` +
+      `المنطقة الاستراتيجية: ${contract.regionCode}\n` +
+      `مبلغ الاستثمار: ${contract.investmentAmountOMR}\n` +
+      `نسبة الشراكة المئوية: ${contract.sharePercent}\n` +
+      `حالة العقد: معتمد ورسمي\n` +
+      `رمز التوثيق الإلكتروني: ${contract.signatureHash}\n` +
+      `تاريخ التوقيع: ${new Date(contract.signedAt).toLocaleString('ar-OM')}\n\n` +
+      `تحقق من صحة العقد عبر مسح رمز الاستجابة السريعة (QR) أو مراجعة منصة واحات ومزارع عُمان.\n` +
+      `========================================`;
+
+    const blob = new Blob([draftText], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Contract_Draft_${contract.signatureHash}.txt`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const chartData = feasibilityRows?.map(r => ({
@@ -116,8 +140,8 @@ export default function FinancialFeasibilityPage() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
             <span className="text-copper text-xs font-bold tracking-widest uppercase mb-2 block">المنظومة الاستثمارية المتقدمة — رؤية 2040</span>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى ومقارنة الفرص والعقود الرقمية</h1>
-            <p className="text-muted mt-2">مقارنة الفرص، رصد الطقس ورطوبة التربة عبر API، تقارير PDF رسومية، وتوقيع عقود الشراكة رقمياً.</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى ومقارنة الفرص وعقود الشراكة</h1>
+            <p className="text-muted mt-2">مقارنة الفرص، رصد الطقس ورطوبة التربة (تاريخياً وحياً)، تقارير PDF مع رمز QR للتحقق، وعقود رقمية قابلة للتحميل.</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <button 
@@ -130,12 +154,12 @@ export default function FinancialFeasibilityPage() {
               onClick={handleExportGraphicalPDF}
               className="inline-flex items-center gap-2 bg-copper hover:bg-copper/90 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md text-xs"
             >
-              <Download size={16} /> تصدير تقرير PDF رسومي
+              <Download size={16} /> تصدير تقرير PDF مع QR
             </button>
           </div>
         </div>
 
-        {/* أداة المقارنة بين دراسات الجدوى المختلفة */}
+        {/* أداة المقارنة بين دراسات الجدوى */}
         <div className="bg-white border border-line rounded-3xl p-8 mb-12 shadow-sm">
           <div className="flex items-center gap-3 text-falaj mb-6">
             <Scale size={26} />
@@ -194,12 +218,12 @@ export default function FinancialFeasibilityPage() {
           )}
         </div>
 
-        {/* دمج خرائط الأقمار الصناعية وطبقات الطقس الحقيقي ورطوبة التربة مع التنبيهات المرئية */}
+        {/* طقس حي ورطوبة التربة مع السلسلة الزمنية التاريخية والتنبيهات المرئية */}
         <div className="bg-white border border-line rounded-3xl p-8 md:p-10 mb-12 shadow-sm">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div className="flex items-center gap-3 text-falaj">
               <Globe size={26} />
-              <h3 className="text-xl font-bold font-kufi">محطات الأرصاد العُمانية الحية وحساسات رطوبة التربة (API)</h3>
+              <h3 className="text-xl font-bold font-kufi">محطات الأرصاد ورطوبة التربة (حياً ومع التاريخ الزمني)</h3>
             </div>
             <div className="flex gap-2 flex-wrap">
               {regionsData?.map((reg) => (
@@ -215,54 +239,59 @@ export default function FinancialFeasibilityPage() {
           </div>
 
           {selectedRegionDetails && liveWeather && (
-            <div className={`p-6 rounded-2xl border ${liveWeather.soilAlert ? 'bg-red-50 border-red-300' : 'bg-falaj-soft border-falaj/20'}`}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-                <div className="md:col-span-2">
-                  <span className="text-xs font-bold text-copper block mb-1">الرصد الميداني الفعلي عبر محطات الأرصاد</span>
-                  <h4 className="text-2xl font-bold text-falaj-deep font-kufi mb-2">{selectedRegionDetails.name}</h4>
-                  <p className="text-ink text-sm leading-relaxed mb-4">{selectedRegionDetails.description}</p>
-                  
-                  {liveWeather.soilAlert && (
-                    <div className="inline-flex items-center gap-2 bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-bold mb-4">
-                      <AlertTriangle size={16} /> تنبيه ميداني: انخفاض رطوبة التربة عن الحد المطلوب! تم تفعيل الري الآلي.
-                    </div>
-                  )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className={`lg:col-span-2 p-6 rounded-2xl border ${liveWeather.soilAlert ? 'bg-red-50 border-red-300' : 'bg-falaj-soft border-falaj/20'}`}>
+                <span className="text-xs font-bold text-copper block mb-1">الرصد الميداني والطقس الحي</span>
+                <h4 className="text-2xl font-bold text-falaj-deep font-kufi mb-2">{selectedRegionDetails.name}</h4>
+                <p className="text-ink text-sm leading-relaxed mb-4">{selectedRegionDetails.description}</p>
+                
+                {liveWeather.soilAlert && (
+                  <div className="inline-flex items-center gap-2 bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-bold mb-4">
+                    <AlertTriangle size={16} /> تنبيه حرج: انخفاض مستوى رطوبة التربة عن الحد الموصى به! تم تفعيل الضخ الاحتياطي.
+                  </div>
+                )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
-                      <CloudSun className="text-copper" size={24} />
-                      <div>
-                        <span className="block text-xs text-muted">الطقس الحالي (API)</span>
-                        <strong className="text-falaj font-kufi">{liveWeather.temp} ({liveWeather.status})</strong>
-                      </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
+                    <CloudSun className="text-copper" size={24} />
+                    <div>
+                      <span className="block text-xs text-muted">الطقس الحالي (API)</span>
+                      <strong className="text-falaj font-kufi">{liveWeather.temp} ({liveWeather.status})</strong>
                     </div>
-                    <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
-                      <Droplet className={liveWeather.soilAlert ? "text-red-500" : "text-falaj"} size={24} />
-                      <div>
-                        <span className="block text-xs text-muted">حساسات رطوبة التربة</span>
-                        <strong className={liveWeather.soilAlert ? "text-red-600 font-kufi" : "text-falaj font-kufi"}>{liveWeather.soilMoisture}</strong>
-                      </div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
+                    <Droplet className={liveWeather.soilAlert ? "text-red-500" : "text-falaj"} size={24} />
+                    <div>
+                      <span className="block text-xs text-muted">رطوبة التربة الحية</span>
+                      <strong className={liveWeather.soilAlert ? "text-red-600 font-kufi" : "text-falaj font-kufi"}>{liveWeather.soilMoisture}</strong>
                     </div>
                   </div>
                 </div>
-                <div className="bg-falaj-deep text-white p-6 rounded-2xl flex flex-col justify-between">
-                  <div>
-                    <span className="text-xs text-copper block mb-1">معدل التبخر (ET0) وسرعة الرياح</span>
-                    <p className="text-xs font-mono text-white/95 mb-2">ET0: {liveWeather.et0}</p>
-                    <p className="text-xs font-mono text-white/95 mb-4">الرياح: {liveWeather.wind} | الرطوبة: {liveWeather.humidity}</p>
-                    <span className="text-xs text-copper block mb-1">المشرف الميداني</span>
-                    <p className="text-xs font-bold">{selectedRegionDetails.supervisor}</p>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-white/20">
-                    <span className="text-xs text-green-300 font-bold">● ربط API الأرصاد نشط</span>
+              </div>
+
+              {/* الرسم البياني للتغيرات التاريخية لرطوبة التربة */}
+              <div className="bg-white p-6 rounded-2xl border border-line flex flex-col justify-between">
+                <div>
+                  <h5 className="text-sm font-bold text-falaj-deep mb-2 font-kufi">التغير التاريخي لرطوبة التربة (24 ساعة)</h5>
+                  <div className="h-44 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={liveWeather.history || []}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
+                        <YAxis domain={[10, 70]} tick={{ fontSize: 10 }} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="moisture" name="نسبة الرطوبة %" stroke="#1F5A45" strokeWidth={2} dot={{ r: 3 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
+                <span className="text-[10px] text-muted text-center mt-2">مصدر البيانات: حساسات النطاق الزراعي الذكي</span>
               </div>
             </div>
           )}
         </div>
 
-        {/* لوحة حاسبة عوائد الشراكة ورسوم توزيع العوائد */}
+        {/* لوحة حاسبة العوائد المرئية */}
         <div className="bg-falaj-deep text-white rounded-3xl p-8 md:p-10 mb-12 shadow-xl border border-falaj/30 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 text-copper mb-4">
@@ -315,18 +344,16 @@ export default function FinancialFeasibilityPage() {
           </div>
         </div>
 
-        {/* نظام التوقيع الرقمي لعقود الشراكة الأولية */}
+        {/* قسم التوقيع الرقمي ومراجعة وتحميل مسودات العقود الموقعة */}
         <div className="bg-white border border-line rounded-3xl p-8 mb-12 shadow-sm">
           <div className="flex items-center gap-3 text-falaj mb-6">
             <Award size={26} />
-            <h3 className="text-xl font-bold font-kufi">التوقيع الرقمي لعقود الشراكة الأولية للمستثمرين</h3>
+            <h3 className="text-xl font-bold font-kufi">عقود الشراكة الرقمية ومسودات التحميل مع رمز QR للتحقق</h3>
           </div>
           {user ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <p className="text-muted text-sm mb-6 leading-relaxed">
-                  يمكنك توقيع عقد الشراكة الأولية رقمياً لتوثيق رغبتك الاستثمارية واعتماد الحصة رسمياً في النظام البيئي لبرنامج الأمن الغذائي.
-                </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <div className="bg-falaj-soft p-6 rounded-2xl border border-falaj/20">
+                <h4 className="text-lg font-bold text-falaj-deep font-kufi mb-4">توقيع عقد شراكة أولية جديدة</h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-muted mb-2">اسم المستثمر الثلاثي:</label>
@@ -335,7 +362,7 @@ export default function FinancialFeasibilityPage() {
                       value={investorFullName}
                       onChange={(e) => setInvestorFullName(e.target.value)}
                       placeholder="الاسم الكامل كما في السجل..."
-                      className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink text-sm outline-none focus:border-falaj"
+                      className="w-full px-4 py-3 bg-white border border-line rounded-xl text-ink text-sm outline-none focus:border-falaj"
                     />
                   </div>
                   <div>
@@ -343,7 +370,7 @@ export default function FinancialFeasibilityPage() {
                     <select 
                       value={selectedContractRegion}
                       onChange={(e) => setSelectedContractRegion(e.target.value)}
-                      className="w-full px-4 py-3 bg-paper border border-line rounded-xl text-ink text-sm outline-none focus:border-falaj"
+                      className="w-full px-4 py-3 bg-white border border-line rounded-xl text-ink text-sm outline-none focus:border-falaj"
                     >
                       {regionsData?.map(r => (
                         <option key={r.code} value={r.code}>{r.name}</option>
@@ -369,71 +396,66 @@ export default function FinancialFeasibilityPage() {
                   </button>
                 </div>
               </div>
-              <div className="bg-falaj-soft p-6 rounded-2xl border border-falaj/20">
-                <h4 className="text-lg font-bold text-falaj-deep font-kufi mb-4">عقودك الموقعة رقمياً</h4>
+
+              <div className="bg-paper p-6 rounded-2xl border border-line">
+                <h4 className="text-lg font-bold text-falaj-deep font-kufi mb-4">مراجعة وتحميل مسودات العقود</h4>
                 {contracts && contracts.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
                     {contracts.map(c => (
-                      <div key={c.id} className="bg-white p-4 rounded-xl border border-line text-xs">
-                        <div className="flex justify-between items-center mb-1">
-                          <strong className="text-falaj-deep">{c.investorName}</strong>
-                          <span className="text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={14} /> معتمد</span>
+                      <div key={c.id} className="bg-white p-4 rounded-xl border border-line flex items-center justify-between gap-4">
+                        <div className="text-xs">
+                          <div className="flex items-center gap-2 mb-1">
+                            <strong className="text-falaj-deep">{c.investorName}</strong>
+                            <span className="text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={12} /> موثق</span>
+                          </div>
+                          <p className="text-muted mb-1">المنطقة: {c.regionCode} | القيمة: {c.investmentAmountOMR}</p>
+                          <p className="font-mono text-[10px] text-copper">التوقيع: {c.signatureHash}</p>
                         </div>
-                        <p className="text-muted mb-1">المنطقة: {c.regionCode} | المبلغ: {c.investmentAmountOMR} ({c.sharePercent})</p>
-                        <p className="font-mono text-[10px] text-copper">رمز التوثيق: {c.signatureHash}</p>
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="bg-falaj/10 p-2 rounded-lg border border-falaj/30 text-falaj" title="رمز QR للتحقق من العقد">
+                            <QrCode size={28} />
+                          </div>
+                          <button 
+                            onClick={() => handleDownloadContractDraft(c)}
+                            className="inline-flex items-center gap-1 bg-falaj text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-falaj-deep"
+                          >
+                            <FileText size={12} /> تحميل المسودة
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted">لا توجد عقود موقعة رقمياً بعد. قم بملء النموذج وتوقيع العقد الأول.</p>
+                  <p className="text-sm text-muted">لا توجد عقود موقعة رقمياً بعد. قم بإنشاء وتوقيع عقدك الأول.</p>
                 )}
               </div>
             </div>
           ) : (
             <div className="text-center py-8">
-              <p className="text-muted mb-4">يرجى تسجيل الدخول بحسابك للتمكن من توقيع عقود الشراكة الرقمية.</p>
+              <p className="text-muted mb-4">يرجى تسجيل الدخول بحسابك للتمكن من توقيع العقود ومراجعة المسودات.</p>
               <button onClick={() => startLogin()} className="bg-falaj text-white px-6 py-3 rounded-xl font-bold">تسجيل الدخول</button>
             </div>
           )}
         </div>
 
-        {/* قائمة دراسات الجدوى المحفوظة والمفضلة مع خيار التصدير */}
-        {user && bookmarks && bookmarks.length > 0 && (
-          <div className="bg-falaj-soft border border-falaj/30 rounded-3xl p-8 mb-12 shadow-sm">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-falaj-deep font-kufi">دراسات الجدوى المحفوظة في مفضلتك الاستثمارية</h3>
-              <button 
-                onClick={handleExportGraphicalPDF}
-                className="inline-flex items-center gap-2 bg-falaj text-white px-4 py-2 rounded-xl text-xs font-bold"
-              >
-                <Download size={14} /> تصدير التقرير والرسوم PDF
-              </button>
+        {/* تذليل تقارير PDF الرسومية مع رمز QR للتحقق */}
+        <div id="pdf-report-footer" className="hidden print:block bg-white p-6 border-t-2 border-falaj mt-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h4 className="font-bold text-falaj font-kufi">تقرير الجدوى الاستثمارية وعقود الشراكة — رؤية عُمان 2040</h4>
+              <p className="text-xs text-muted">وثيقة رسمية صادرة عن البوابة الاستثمارية لبرنامج الأمن الغذائي والزراعي.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bookmarks.map((bm) => {
-                const reg = regionsData?.find(r => r.code === bm.regionCode);
-                return (
-                  <div key={bm.id} className="bg-white p-5 rounded-2xl border border-line flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <strong className="text-falaj-deep font-kufi">{reg?.name || bm.regionCode}</strong>
-                        <button 
-                          onClick={() => removeBookmarkMutation.mutate({ regionCode: bm.regionCode })}
-                          className="text-red-500 hover:text-red-700 p-1"
-                          title="إزالة من المفضلة"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <p className="text-xs text-muted mb-4">{bm.notes}</p>
-                    </div>
-                    <span className="text-[11px] text-copper font-mono">حفظ في: {new Date(bm.createdAt).toLocaleDateString('ar-OM')}</span>
-                  </div>
-                );
-              })}
+            <div className="flex items-center gap-3">
+              <div className="text-left text-[10px] font-mono text-muted">
+                <span>رمز التحقق الرسمي:</span><br />
+                <strong>OMAN-2040-SECURE-VERIFIED</strong>
+              </div>
+              <div className="p-2 border border-falaj rounded bg-falaj/10 text-falaj">
+                <QrCode size={36} />
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

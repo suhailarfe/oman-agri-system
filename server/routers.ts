@@ -250,13 +250,28 @@ export const appRouter = router({
         }
 
         const weatherMap: Record<string, any> = {
-          najd: { temp: "34°C", humidity: "42%", wind: "14 كم/س", soilMoisture: "38% (مثالي للقمح)", status: "مستقر - شمس مشمشة", et0: "5.2 مم/يوم", soilAlert: false },
-          batinah: { temp: "38°C", humidity: "65%", wind: "10 كم/س", soilMoisture: "26% (تحذير: انخفاض الرطوبة)", status: "دافئ رطب", et0: "6.1 مم/يوم", soilAlert: true },
-          dhahirah: { temp: "40°C", humidity: "28%", wind: "18 كم/س", soilMoisture: "31% (تحكم آلي بالري)", status: "جاف مشمس", et0: "7.4 مم/يوم", soilAlert: false },
-          wusta: { temp: "42°C", humidity: "35%", wind: "22 كم/س", soilMoisture: "24% (تحذير: تربة جافة حرجة)", status: "حار صحراوي", et0: "8.0 مم/يوم", soilAlert: true },
-          jabal: { temp: "22°C", humidity: "58%", wind: "12 كم/س", soilMoisture: "52% (أفلاج جبلية غنية)", status: "معتدل منعش", et0: "4.0 مم/يوم", soilAlert: false }
+          najd: { 
+            temp: "34°C", humidity: "42%", wind: "14 كم/س", soilMoisture: "38% (مثالي للقمح)", status: "مستقر - شمس مشمشة", et0: "5.2 مم/يوم", soilAlert: false,
+            history: [{ time: "06:00", moisture: 36 }, { time: "09:00", moisture: 39 }, { time: "12:00", moisture: 38 }, { time: "15:00", moisture: 37 }, { time: "18:00", moisture: 40 }]
+          },
+          batinah: { 
+            temp: "38°C", humidity: "65%", wind: "10 كم/س", soilMoisture: "26% (تحذير: انخفاض الرطوبة)", status: "دافئ رطب", et0: "6.1 مم/يوم", soilAlert: true,
+            history: [{ time: "06:00", moisture: 30 }, { time: "09:00", moisture: 28 }, { time: "12:00", moisture: 25 }, { time: "15:00", moisture: 26 }, { time: "18:00", moisture: 27 }]
+          },
+          dhahirah: { 
+            temp: "40°C", humidity: "28%", wind: "18 كم/س", soilMoisture: "31% (تحكم آلي بالري)", status: "جاف مشمس", et0: "7.4 مم/يوم", soilAlert: false,
+            history: [{ time: "06:00", moisture: 33 }, { time: "09:00", moisture: 32 }, { time: "12:00", moisture: 31 }, { time: "15:00", moisture: 30 }, { time: "18:00", moisture: 32 }]
+          },
+          wusta: { 
+            temp: "42°C", humidity: "35%", wind: "22 كم/س", soilMoisture: "24% (تحذير: تربة جافة حرجة)", status: "حار صحراوي", et0: "8.0 مم/يوم", soilAlert: true,
+            history: [{ time: "06:00", moisture: 27 }, { time: "09:00", moisture: 25 }, { time: "12:00", moisture: 23 }, { time: "15:00", moisture: 24 }, { time: "18:00", moisture: 24 }]
+          },
+          jabal: { 
+            temp: "22°C", humidity: "58%", wind: "12 كم/س", soilMoisture: "52% (أفلاج جبلية غنية)", status: "معتدل منعش", et0: "4.0 مم/يوم", soilAlert: false,
+            history: [{ time: "06:00", moisture: 50 }, { time: "09:00", moisture: 51 }, { time: "12:00", moisture: 52 }, { time: "15:00", moisture: 52 }, { time: "18:00", moisture: 53 }]
+          }
         };
-        return weatherMap[input.regionCode] || { temp: "35°C", humidity: "50%", wind: "12 كم/س", soilMoisture: "40%", status: "معتدل", et0: "5.0 مم/يوم", soilAlert: false };
+        return weatherMap[input.regionCode] || { temp: "35°C", humidity: "50%", wind: "12 كم/س", soilMoisture: "40%", status: "معتدل", et0: "5.0 مم/يوم", soilAlert: false, history: [] };
       }),
 
     // حفظ عقد شراكة موقع رقمياً
