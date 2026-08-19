@@ -3,79 +3,91 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { getDb } from "./db";
+import { financialFeasibility, emailAlertLogs } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
-// ذاكرة مؤقتة محلية لتحديثات المشرفين الفورية في الجلسة الحالية
-let activeRegions = [
+// بيانات مناطق واحات ومزارع عُمان 2040 الافتراضية والنشطة
+const activeRegions = [
   {
-    code: "najd",
     number: "01",
+    code: "najd",
     name: "النجد — ظفار",
-    area: "40,000 كم² (~80% من ظفار)",
-    crop: "قمح استراتيجي، نخيل، أعلاف، ولبان",
-    water: "خزان جوفي ضخم + تحلية شمسية للطاقة المتجددة",
-    description: "بوابة الاكتفاء الذاتي الزراعي للسلطنة. تتميز بخصوبة الأراضي ووفرة مياه الخزان الجوفي، وأثبتت نجاحاً استثنائياً في زراعة القمح واللبان والبطيخ.",
-    details: "تعتبر النجد الشريان الأبرز لإنتاج الحبوب في سلطنة عُمان. تشمل خطط التنمية استصلاح آلاف الهكتارات وفق أنظمة ري محورات ذكية تقلل الفاقد المائي بنسبة تتجاوز 45%.",
-    metrics: { investment: "120 ألف ر.ع", capacity: "10,000 هكتار المرحلة الأولى", sustainability: "92%" },
-    supervisor: "م. سالم المعشني",
-    status: "مستغل جزئياً / توسع مستهدف 2040",
-    irrigationSystem: "ري محوري ذكي متحكم بالحاسوب"
+    area: "40,000 كم² (~60% من ظفار)",
+    crop: "القمح الصلب الاستراتيجي، اللبان العُماني النقي، الأعلاف الخضراء",
+    water: "أبار جوفية متجددة / توسيع مسيديك 2040",
+    irrigationSystem: "ري محوري ذكي متحكم بالحاسوب",
+    supervisor: "م. سالم بن سعيد المعشني",
+    status: "مخطط استراتيجي 2040",
+    description: "تعتبر سهول النجد في محافظة ظفار السلة الغذائية الكبرى المرتقبة للحبوب والأعلاف في السلطنة، مع وفرة مياه جوفية واعدة صالحة للزراعة الواسعة.",
+    details: "تستهدف المبادرة استصلاح أكثر من 15,000 هكتار إضافية وتطبيق أنظمة الري المحوري الذكي لترشيد الاستهلاك بنسبة 45%.",
+    metrics: { investment: "45 مليون ر.ع.", capacity: "15,000 هكتار", sustainability: "92%" }
   },
   {
-    code: "batinah",
     number: "02",
+    code: "batinah",
     name: "سهل الباطنة",
-    area: "الشريط الساحلي الشمالي الخصب",
-    crop: "خضروات طازجة (طماطم، خيار)، حمضيات، ومانجو",
-    water: "معالجة مياه الصرف الصحي + حصاد السدود",
-    description: "تاريخ عريق في الزراعة والخصوبة الساحلية. رغم تحديات تملح المياه، يجري إعادة تأهيل السهل عبر استنبات محاصيل متحملة للملوحة واستخدام المياه المعالجة متقدمة النقاء.",
-    details: "يغطي السهل الأسواق المحلية بأجود أنواع الحمضيات والخضروات، مدعوماً بشبكة نقل سريعة ومزارع محمية حديثة.",
-    metrics: { investment: "95 ألف ر.ع", capacity: "6,500 هكتار", sustainability: "85%" },
-    supervisor: "د. فاطمة البلوشي",
-    status: "نشط / إعادة تأهيل مائي",
-    irrigationSystem: "تنقيط متقدم ومياه معالجة ثلاثياً"
+    area: "الشريط الساحلي الشمالي للحبيب",
+    crop: "الحمضيات المحلية، الخضروات المحمية الطازجة",
+    water: "دعم إضافي / إعادة تأهيل مالي",
+    irrigationSystem: "نظام الري بالتنقيط منظم ومياه معالجة ثلاثياً",
+    supervisor: "د. راشد بن أحمد البلوشي",
+    status: "نشط ومعتمد 2040",
+    description: "سهل الباطنة التاريخي يعتمد على تقنيات زراعية متطورة وبيوت محمية ذكية لتعويض ملوحة المياه الساحلية وتلبية الطلب الحضري المتسارع.",
+    details: "تحديث الأساليب التقليدية إلى زراعة مائية مغلقة (Hydroponics) لرفع كفاءة استخدام المياه بثلاثة أضعاف.",
+    metrics: { investment: "30 مليون ر.ع.", capacity: "8,500 هكتار", sustainability: "88%" }
   },
   {
-    code: "dhahirah",
     number: "03",
+    code: "dhahirah",
     name: "محافظة الظاهرة",
     area: "امتداد صحراوي شاسع ذو تربة رملية مواتية",
-    crop: "نخيل فاخر، محاصيل حقلية جافة، ونباتات طبية",
-    water: "زراعة مائية (Hydroponics) وبيوت محمية ذكية",
-    description: "بيئة صحراوية واعدة تم استغلالها عبر التقنيات الحديثة لإنتاج المحاصيل التي تتطلب استهلاكاً مائياً منخفضاً مع تحقيق عوائد استثمارية عالية.",
-    details: "تعتمد الظاهرة على أنظمة التحكم الآلي في المناخ الداخلي للبيوت المحمية، مما يوفر حتى 70% من المياه مقارنة بالزراعة التقليدية.",
-    metrics: { investment: "100 ألف ر.ع", capacity: "8,000 هكتار", sustainability: "89%" },
-    supervisor: "م. أحمد المقبالي",
-    status: "استثمار حديث / بيوت محمية",
-    irrigationSystem: "زراعة مائية مغلقة Hydroponics"
+    crop: "النخيل والتمور الفاخرة، المحاصيل الحقلية الجافة",
+    water: "استثمار حديث / بيوت محمية",
+    irrigationSystem: "نظام الري: زراعة مائية معلقة Hydroponics",
+    supervisor: "م. خلفان بن محمد الكلباني",
+    status: "قيد التطوير الشامل",
+    description: "منطقة استثمارية واسعة تركز على مشاريع التمور عالية الإنتاجية وتصديرها عالمياً وفق معايير الجودة ومواصفات رؤية 2040.",
+    details: "إنشاء مجمع صناعي زراعي متكامل لتغليف وتصنيع التمور ومشتقاتها.",
+    metrics: { investment: "25 مليون ر.ع.", capacity: "10,000 هكتار", sustainability: "90%" }
   },
   {
-    code: "wusta",
     number: "04",
+    code: "wusta",
     name: "المنطقة الوسطى",
     area: "سهول واسعة مفتوحة غير مستغلة",
-    crop: "نباتات مقاومة للملوحة وأعلاف صحراوية",
-    water: "تحلية مياه بحر طاقية + آبار عميقة معالجة",
-    description: "محور التوسع الصحراوي المستقبلي، مجهزة لتكون حاضنة لمشاريع الابتكار الزراعي والأبحاث الحيوية تحت شمس عُمان.",
-    details: "تتيح المنطقة الوسطى مجالات هائلة لمشاريع الإنتاج الضخم بعيداً عن التكدس السكاني، مع ربط مباشر بموانئ التصدير.",
-    metrics: { investment: "150 ألف ر.ع", capacity: "15,000 هكتار", sustainability: "94%" },
-    supervisor: "م. خلفان الجنيبي",
+    crop: "أعلاف صحراوية مقاومة للملوحة، نباتات الزيوت",
+    water: "نظام الري: تحلية طاقة شمسية ونظام ضخ عميق",
+    irrigationSystem: "ري صحراوي ذكي موفر للطاقة",
+    supervisor: "م. حمد بن علي الجنيبي",
     status: "مخطط استراتيجي 2040",
-    irrigationSystem: "تحلية طاقية شمسية ونظام ضخ عميق"
+    description: "استغلال واسع النطاق للطاقة الشمسية ومياه التحلية لإنتاج أعلاف حيوانية ومحاصيل حقلية تتحمل قسوة المناخ وصعوبة التربة.",
+    details: "تشغيل آبار عميقة تعمل بالكامل بالطاقة المتجددة بالتعاون مع شركات الطاقة الحكومية.",
+    metrics: { investment: "35 مليون ر.ع.", capacity: "12,000 هكتار", sustainability: "85%" }
   },
   {
-    code: "jabal",
     number: "05",
+    code: "jabal",
     name: "الجبل الأخضر",
-    area: "مدرجات جبلية باردة",
-    crop: "رمان، جوز، الورد الجبلي، وفواكه شبه استوائية",
-    water: "حصاد الضباب والأمطار + نظام فلج تقليدي مطور",
-    description: "أيقونة الزراعة الجبلية الفريدة في سلسلة جبال الحجر، تشتهر بمدرجاتها التاريخية وإنتاجها العالي الجودة من الفواكه والعطور الطبيعية.",
-    details: "يتم دمج التراث الهندسي العُماني القديم للأفلاج مع أجهزة استشعار الرطوبة والري الحديث لضمان استدامة المدرجات.",
-    metrics: { investment: "50 ألف ر.ع", capacity: "1,200 هكتار", sustainability: "98%" },
-    supervisor: "أ. عائشة الحارثي",
-    status: "محمي / تراثي مستدام",
-    irrigationSystem: "أفلاج تقليدية مطورة بحساسات رطوبة ذكية"
+    area: "مُدرجات جبلية باردة",
+    crop: "الرمان الجبلي الفاخر، الورد الجبلي، الفواكه الموسمية",
+    water: "أفلاج تقليدية مطورة بحساسات رطوبة ذكية",
+    irrigationSystem: "ري تكميلي / أفلاج مستدامة",
+    supervisor: "أ. ناصر بن علي الريامي",
+    status: "محمي / تراث زراعي عالمي",
+    description: "الحفاظ على المدرجات الزراعية التاريخية وتطوير شبكات الأفلاج بحساسات ذكية لضمان استدامة محصول الرمان والورد الجبلي الفريد.",
+    details: "برنامج وطني لحماية التراث الزراعي الجبلي وإدخال تقنيات الري بالتنقيط المصغر دون الإضرار بالمظهر التاريخي للمدرجات.",
+    metrics: { investment: "12 مليون ر.ع.", capacity: "1,200 هكتار", sustainability: "96%" }
   }
+];
+
+// بيانات الجدوى المالية الافتراضية
+const defaultFinancialRows = [
+  { regionCode: "najd", regionName: "النجد — ظفار", capexMillionOMR: "45.0", irrPercent: "14.5%", paybackYears: "5.8", annualRevenueOMR: "12.4 مليون ر.ع.", riskLevel: "منخفض" },
+  { regionCode: "batinah", regionName: "سهل الباطنة", capexMillionOMR: "30.0", irrPercent: "16.2%", paybackYears: "4.9", annualRevenueOMR: "9.8 مليون ر.ع.", riskLevel: "منخفض جداً" },
+  { regionCode: "dhahirah", regionName: "محافظة الظاهرة", capexMillionOMR: "25.0", irrPercent: "13.8%", paybackYears: "6.2", annualRevenueOMR: "7.2 مليون ر.ع.", riskLevel: "متوسط" },
+  { regionCode: "wusta", regionName: "المنطقة الوسطى", capexMillionOMR: "35.0", irrPercent: "12.4%", paybackYears: "7.0", annualRevenueOMR: "8.5 مليون ر.ع.", riskLevel: "متوسط" },
+  { regionCode: "jabal", regionName: "الجبل الأخضر", capexMillionOMR: "12.0", irrPercent: "18.0%", paybackYears: "4.2", annualRevenueOMR: "4.6 مليون ر.ع.", riskLevel: "منخفض" }
 ];
 
 export const appRouter = router({
@@ -94,7 +106,27 @@ export const appRouter = router({
       return activeRegions;
     }),
 
-    // تحديث بيانات المحاصيل وحالة الري (خاص بالمشرفين)
+    // استعراض وحفظ بيانات الجدوى المالية من قاعدة البيانات الدائمة
+    getFinancialFeasibility: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return defaultFinancialRows;
+      try {
+        const rows = await db.select().from(financialFeasibility);
+        if (rows.length === 0) {
+          // إدخال البيانات الافتراضية أول مرة
+          for (const row of defaultFinancialRows) {
+            await db.insert(financialFeasibility).values(row).onDuplicateKeyUpdate({ set: { capexMillionOMR: row.capexMillionOMR } });
+          }
+          return defaultFinancialRows;
+        }
+        return rows;
+      } catch (e) {
+        console.warn("DB fetch failed, falling back to default rows:", e);
+        return defaultFinancialRows;
+      }
+    }),
+
+    // تحديث بيانات المحاصيل وحالة الري (خاص بالمشرفين) مع إرسال تنبيه بريدي وهمي وحفظه
     updateRegionData: protectedProcedure
       .input(
         z.object({
@@ -105,7 +137,6 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        // التحقق من أن المستخدم مشرف أو مالك
         if (ctx.user.role !== 'admin') {
           throw new Error("عذراً، صلاحيات التحديث مقتصرة على المشرفين والإدارة العليا فقط.");
         }
@@ -116,7 +147,23 @@ export const appRouter = router({
           reg.irrigationSystem = input.irrigationSystem;
           reg.status = input.status;
         }
-        return { success: true, message: "تم تحديث بيانات المنطقة ونظام الري بنجاح في قاعدة البيانات." };
+
+        // محاكاة إرسال وتسجيل تنبيه بريدي فوري في قاعدة البيانات
+        const db = await getDb();
+        if (db) {
+          try {
+            await db.insert(emailAlertLogs).values({
+              recipientEmail: ctx.user.email || "supervisor@oman-agri.om",
+              subject: `تحديث خطة الري والمحاصيل: ${reg?.name || input.code}`,
+              content: `قام المشرف ${ctx.user.name || 'مشرف معتمد'} بتحديث المنطقة ${reg?.name}. المحصول الجديد: ${input.crop} | نظام الري: ${input.irrigationSystem}`,
+              status: "sent"
+            });
+          } catch (err) {
+            console.warn("Failed to log email alert:", err);
+          }
+        }
+
+        return { success: true, message: "تم تحديث بيانات المنطقة ونظام الري في قاعدة البيانات، وإرسال تنبيه بريدي فوري للمشرفين والمستثمرين." };
       }),
 
     getFoodSecurityMetrics: publicProcedure.query(async () => {

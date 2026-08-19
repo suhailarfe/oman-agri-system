@@ -11,6 +11,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import RegionPage from "./pages/RegionPage";
 import SystemArchitecturePage from "./pages/SystemArchitecturePage";
+import FinancialFeasibilityPage from "./pages/FinancialFeasibilityPage";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/region/:code"} component={RegionPage} />
       <Route path={"/architecture"} component={SystemArchitecturePage} />
+      <Route path={"/feasibility"} component={FinancialFeasibilityPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

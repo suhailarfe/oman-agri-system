@@ -62,3 +62,30 @@ export const visitorInquiries = mysqlTable("visitor_inquiries", {
 
 export type VisitorInquiry = typeof visitorInquiries.$inferSelect;
 export type InsertVisitorInquiry = typeof visitorInquiries.$inferInsert;
+
+
+export const financialFeasibility = mysqlTable("financial_feasibility", {
+  id: int("id").autoincrement().primaryKey(),
+  regionCode: varchar("regionCode", { length: 32 }).notNull(),
+  regionName: varchar("regionName", { length: 128 }).notNull(),
+  capexMillionOMR: varchar("capexMillionOMR", { length: 64 }).notNull(),
+  irrPercent: varchar("irrPercent", { length: 32 }).notNull(),
+  paybackYears: varchar("paybackYears", { length: 32 }).notNull(),
+  annualRevenueOMR: varchar("annualRevenueOMR", { length: 64 }).notNull(),
+  riskLevel: varchar("riskLevel", { length: 32 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FinancialFeasibility = typeof financialFeasibility.$inferSelect;
+export type InsertFinancialFeasibility = typeof financialFeasibility.$inferInsert;
+
+export const emailAlertLogs = mysqlTable("email_alert_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  status: varchar("status", { length: 32 }).default("sent").notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+});
+
+export type EmailAlertLog = typeof emailAlertLogs.$inferSelect;

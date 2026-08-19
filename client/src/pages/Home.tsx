@@ -36,6 +36,7 @@ const navItems = [
   { label: "مؤشرات الأمن الغذائي", href: "#food-security" },
   { label: "لوحة المشرفين", href: "#admin-dashboard" },
   { label: "هندسة النظام وERD", href: "/architecture" },
+  { label: "الجدوى المالية وتصدير Excel", href: "/feasibility" },
   { label: "تواصل", href: "#contact" },
 ];
 
