@@ -89,3 +89,15 @@ export const emailAlertLogs = mysqlTable("email_alert_logs", {
 });
 
 export type EmailAlertLog = typeof emailAlertLogs.$inferSelect;
+
+
+export const investorBookmarks = mysqlTable("investor_bookmarks", {
+  id: int("id").autoincrement().primaryKey(),
+  userOpenId: varchar("userOpenId", { length: 64 }).notNull(),
+  regionCode: varchar("regionCode", { length: 32 }).notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type InvestorBookmark = typeof investorBookmarks.$inferSelect;
+export type InsertInvestorBookmark = typeof investorBookmarks.$inferInsert;

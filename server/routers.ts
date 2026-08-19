@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { financialFeasibility, emailAlertLogs } from "../drizzle/schema";
+import { financialFeasibility, emailAlertLogs, investorBookmarks } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
 // بيانات مناطق واحات ومزارع عُمان 2040 الافتراضية والنشطة
@@ -194,6 +194,39 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return { success: true, message: "تم تسجيل الطلب وإرساله إلى مشرف المنطقة بنجاح." };
       }),
+
+    // حفظ وتفضيل دراسات الجدوى للمستثمرين
+    saveBookmark: protectedProcedure
+      .input(
+        z.object({
+          regionCode: z.string(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) {
+          throw new Error("قاعدة البيانات غير متوفرة حالياً.");
+        }
+        await db.insert(investorBookmarks).values({
+          userOpenId: ctx.user.openId,
+          regionCode: input.regionCode,
+          notes: input.notes || "دراسة جدوى مفضلة للمستثمر",
+        });
+        return { success: true, message: "تم حفظ دراسة الجدوى في قائمة المفضلة الاستثمارية الخاصة بك." };
+      }),
+
+    getBookmarks: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      try {
+        const rows = await db.select().from(investorBookmarks).where(eq(investorBookmarks.userOpenId, ctx.user.openId));
+        return rows;
+      } catch (e) {
+        console.warn("Failed to fetch bookmarks:", e);
+        return [];
+      }
+    }),
   }),
 });
 
