@@ -35,6 +35,7 @@ const navItems = [
   { label: "الخريطة والفلاتر", href: "#map-section" },
   { label: "مؤشرات الأمن الغذائي", href: "#food-security" },
   { label: "لوحة المشرفين", href: "#admin-dashboard" },
+  { label: "هندسة النظام وERD", href: "/architecture" },
   { label: "تواصل", href: "#contact" },
 ];
 
