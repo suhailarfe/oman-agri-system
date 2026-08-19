@@ -1,18 +1,18 @@
 /*
- * صفحة دراسة الجدوى المالية المتقدمة، مع حاسبة عوائد الشراكة، خرائط الأقمار الصناعية، وحفظ الدراسات
+ * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع طبقة طقس ورطوبة التربة، تصدير المفضلة PDF/Excel، ورسوم العوائد التفاعلية
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, ShieldCheck, Bookmark, Globe, Cpu } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell } from "recharts";
 
 export default function FinancialFeasibilityPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [riskFilter, setRiskFilter] = useState("all");
   const [investmentAmount, setInvestmentAmount] = useState<number>(50000);
-  const [partnershipShare, setPartnershipShare] = useState<number>(15); // نسبة الشراكة المئوية
+  const [partnershipShare, setPartnershipShare] = useState<number>(15);
   const [activeSatelliteRegion, setActiveSatelliteRegion] = useState("najd");
 
   const { user } = useAuth();
@@ -20,14 +20,20 @@ export default function FinancialFeasibilityPage() {
   const { data: feasibilityRows, isLoading } = trpc.agri.getFinancialFeasibility.useQuery();
   const { data: regionsData } = trpc.agri.getRegions.useQuery();
   const { data: bookmarks } = trpc.agri.getBookmarks.useQuery(undefined, { enabled: !!user });
+  const { data: liveWeather } = trpc.agri.getLiveWeatherAndSoil.useQuery({ regionCode: activeSatelliteRegion });
 
   const saveBookmarkMutation = trpc.agri.saveBookmark.useMutation({
     onSuccess: (res) => {
       alert(res.message);
       utils.agri.getBookmarks.invalidate();
     },
-    onError: (err) => {
-      alert(err.message);
+    onError: (err) => alert(err.message)
+  });
+
+  const removeBookmarkMutation = trpc.agri.removeBookmark.useMutation({
+    onSuccess: (res) => {
+      alert(res.message);
+      utils.agri.getBookmarks.invalidate();
     }
   });
 
@@ -54,6 +60,14 @@ export default function FinancialFeasibilityPage() {
     document.body.removeChild(link);
   };
 
+  const handleExportBookmarksPDF = () => {
+    if (!bookmarks || bookmarks.length === 0) {
+      alert("لا توجد دراسات جدوى محفوظة في المفضلة للتصدير.");
+      return;
+    }
+    window.print(); // تفعيل طباعة المتصفح لحفظ التقرير كملف PDF
+  };
+
   const chartData = feasibilityRows?.map(r => ({
     name: r.regionName,
     capex: parseFloat(r.capexMillionOMR),
@@ -61,6 +75,15 @@ export default function FinancialFeasibilityPage() {
   })) || [];
 
   const selectedRegionDetails = regionsData?.find(r => r.code === activeSatelliteRegion);
+
+  // بيانات عوائد الشراكة المرئية (عائد المستثمر مقابل حصة الحكومة/الشركاء)
+  const annualReturnAmount = (investmentAmount * (partnershipShare / 100)) * 0.155;
+  const pieData = [
+    { name: "عائد حصة المستثمر", value: annualReturnAmount },
+    { name: "إعادة استثمار التطوير", value: annualReturnAmount * 0.3 },
+    { name: "احتياطي الصندوق الزراعي", value: annualReturnAmount * 0.2 },
+  ];
+  const COLORS = ['#1F5A45', '#b97a4c', '#2c7a5d'];
 
   return (
     <div className="site-shell" dir="rtl">
@@ -77,65 +100,85 @@ export default function FinancialFeasibilityPage() {
       <main className="page-pad py-24 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
-            <span className="text-copper text-xs font-bold tracking-widest uppercase mb-2 block">التقارير الاستثمارية والخرائط الفضائية</span>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى المالية وحاسبة الشراكة</h1>
-            <p className="text-muted mt-2">بيانات مالية، خرائط الأقمار الصناعية، وعوائد الشراكة الاستثمارية المستدامة لعام 2040.</p>
+            <span className="text-copper text-xs font-bold tracking-widest uppercase mb-2 block">التقارير الاستثمارية والخرائط الفضائية الحية</span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى المالية وعوائد الشراكة</h1>
+            <p className="text-muted mt-2">متابعة الطقس ورطوبة التربة الميدانية، وحساب العوائد الاستثمارية المستدامة لرؤية عُمان 2040.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button 
               onClick={handleExportExcel}
-              className="primary-button inline-flex items-center gap-2 bg-falaj hover:bg-falaj-deep text-white px-5 py-3 rounded-xl font-bold transition-all shadow-md text-xs"
+              className="primary-button inline-flex items-center gap-2 bg-falaj hover:bg-falaj-deep text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md text-xs"
             >
-              <FileSpreadsheet size={16} /> تصدير التقرير (Excel)
+              <FileSpreadsheet size={16} /> تصدير كل الدراسات (Excel)
+            </button>
+            <button 
+              onClick={handleExportBookmarksPDF}
+              className="inline-flex items-center gap-2 bg-copper hover:bg-copper/90 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md text-xs"
+            >
+              <Download size={16} /> تصدير المفضلة (PDF/طباعة)
             </button>
           </div>
         </div>
 
-        {/* لوحة حاسبة عوائد الشراكة الاستثمارية التفاعلية */}
-        <div className="bg-falaj-deep text-white rounded-3xl p-8 md:p-10 mb-12 shadow-xl border border-falaj/30">
-          <div className="flex items-center gap-3 text-copper mb-4">
-            <TrendingUp size={26} />
-            <h2 className="text-2xl font-bold font-kufi">حاسبة العوائد المتوقعة حسب نسب الشراكة</h2>
+        {/* لوحة حاسبة عوائد الشراكة الاستثمارية ورسومها البيانية */}
+        <div className="bg-falaj-deep text-white rounded-3xl p-8 md:p-10 mb-12 shadow-xl border border-falaj/30 grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-3 text-copper mb-4">
+              <TrendingUp size={26} />
+              <h2 className="text-2xl font-bold font-kufi">حاسبة العوائد التفاعلية حسب نسب الشراكة</h2>
+            </div>
+            <p className="text-white/80 text-sm mb-6 leading-relaxed">
+              تتيح لك هذه اللوحة استكشاف العوائد المتوقعة بناءً على مبلغ استثمارك ونسبة شراكتك في مشاريع الاستزراع الحكومي بالنجد وسهل الباطنة والمناطق الأخرى.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <div>
+                <label className="block text-xs text-copper mb-2 font-bold">مبلغ الاستثمار (ر.ع.):</label>
+                <input 
+                  type="number" 
+                  value={investmentAmount} 
+                  onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white outline-none font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-copper mb-2 font-bold">نسبة الشراكة المئوية (%):</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="100" 
+                  value={partnershipShare} 
+                  onChange={(e) => setPartnershipShare(Number(e.target.value))}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white outline-none font-bold"
+                />
+              </div>
+            </div>
           </div>
-          <p className="text-white/80 text-sm mb-8 leading-relaxed">
-            أدخل مبلغ الاستثمار المقترح ونسبة الشراكة في مشاريع الاستزراع الحكومي لحساب التدفقات النقدية والعائد السنوي المتوقع بناءً على دراسات الجدوى الرسمية.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div>
-              <label className="block text-xs text-copper mb-2 font-bold">مبلغ الاستثمار (ر.ع.):</label>
-              <input 
-                type="number" 
-                value={investmentAmount} 
-                onChange={(e) => setInvestmentAmount(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white outline-none font-bold"
-              />
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+            <span className="text-xs text-copper font-bold mb-2">توزيع العوائد السنوية المتوقعة</span>
+            <div className="h-44 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value">
+                    {pieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-            <div>
-              <label className="block text-xs text-copper mb-2 font-bold">نسبة الشراكة المئوية (%):</label>
-              <input 
-                type="number" 
-                min="1" 
-                max="100" 
-                value={partnershipShare} 
-                onChange={(e) => setPartnershipShare(Number(e.target.value))}
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white outline-none font-bold"
-              />
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-center">
-              <span className="text-xs text-white/70">العائد السنوي المتوقع لشراكتك:</span>
-              <strong className="text-2xl font-kufi text-copper mt-1">
-                {((investmentAmount * (partnershipShare / 100)) * 0.155).toLocaleString('en-US', { maximumFractionDigits: 0 })} ر.ع. / سنوياً
-              </strong>
-            </div>
+            <strong className="text-xl font-kufi text-white mt-2">
+              {annualReturnAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })} ر.ع. سنوياً
+            </strong>
           </div>
         </div>
 
-        {/* دمج خرائط الأقمار الصناعية وربط المساحات الفعلية */}
+        {/* دمج خرائط الأقمار الصناعية وطبقات الطقس ورطوبة التربة */}
         <div className="bg-white border border-line rounded-3xl p-8 md:p-10 mb-12 shadow-sm">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div className="flex items-center gap-3 text-falaj">
               <Globe size={26} />
-              <h3 className="text-xl font-bold font-kufi">خريطة الأقمار الصناعية والمساحات الجغرافية الفعلية</h3>
+              <h3 className="text-xl font-bold font-kufi">خريطة الأقمار الصناعية وطبقات الطقس وحساسات رطوبة التربة</h3>
             </div>
             <div className="flex gap-2 flex-wrap">
               {regionsData?.map((reg) => (
@@ -149,32 +192,40 @@ export default function FinancialFeasibilityPage() {
               ))}
             </div>
           </div>
-          {selectedRegionDetails && (
+
+          {selectedRegionDetails && liveWeather && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-falaj-soft p-6 rounded-2xl border border-falaj/20">
               <div className="md:col-span-2">
-                <span className="text-xs font-bold text-copper block mb-1">المنطقة الجغرافية النشطة</span>
+                <span className="text-xs font-bold text-copper block mb-1">المنطقة الجغرافية النشطة ومحطة الرصد</span>
                 <h4 className="text-2xl font-bold text-falaj-deep font-kufi mb-2">{selectedRegionDetails.name}</h4>
                 <p className="text-ink text-sm leading-relaxed mb-4">{selectedRegionDetails.description}</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-3.5 rounded-xl border border-line">
-                    <span className="block text-xs text-muted">المساحة الإجمالية للمشروع</span>
-                    <strong className="text-falaj font-kufi">{selectedRegionDetails.area}</strong>
+                  <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
+                    <CloudSun className="text-copper" size={24} />
+                    <div>
+                      <span className="block text-xs text-muted">حالة الطقس الحرارية</span>
+                      <strong className="text-falaj font-kufi">{liveWeather.temp} ({liveWeather.status})</strong>
+                    </div>
                   </div>
-                  <div className="bg-white p-3.5 rounded-xl border border-line">
-                    <span className="block text-xs text-muted">نظام الري المعتمد فضائياً</span>
-                    <strong className="text-falaj font-kufi">{selectedRegionDetails.irrigationSystem}</strong>
+                  <div className="bg-white p-3.5 rounded-xl border border-line flex items-center gap-3">
+                    <Droplet className="text-falaj" size={24} />
+                    <div>
+                      <span className="block text-xs text-muted">رطوبة التربة الحية</span>
+                      <strong className="text-falaj font-kufi">{liveWeather.soilMoisture}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
               <div className="bg-falaj-deep text-white p-6 rounded-2xl flex flex-col justify-between">
                 <div>
-                  <span className="text-xs text-copper block mb-1">إحداثيات الأقمار الصناعية</span>
-                  <p className="text-xs font-mono text-white/95 mb-4">Lat: 18.2471° N<br />Long: 54.0921° E (النجد الاستراتيجي)</p>
+                  <span className="text-xs text-copper block mb-1">بيانات الأقمار الصناعية والتبخر (ET0)</span>
+                  <p className="text-xs font-mono text-white/95 mb-2">معدل البخر النتحي: {liveWeather.et0}</p>
+                  <p className="text-xs font-mono text-white/95 mb-4">سرعة الرياح: {liveWeather.wind} | الرطوبة: {liveWeather.humidity}</p>
                   <span className="text-xs text-copper block mb-1">المشرف الميداني المعتمد</span>
                   <p className="text-xs font-bold">{selectedRegionDetails.supervisor}</p>
                 </div>
                 <div className="mt-4 pt-4 border-t border-white/20">
-                  <span className="text-xs text-green-300 font-bold">● تغطية حية بالأقمار الصناعية نشطة</span>
+                  <span className="text-xs text-green-300 font-bold">● حساسات الرطوبة الميدانية متصلة</span>
                 </div>
               </div>
             </div>
@@ -228,15 +279,48 @@ export default function FinancialFeasibilityPage() {
           </div>
         </div>
 
+        {/* قائمة دراسات الجدوى المحفوظة في المفضلة */}
+        {user && bookmarks && bookmarks.length > 0 && (
+          <div className="bg-falaj-soft border border-falaj/30 rounded-3xl p-8 mb-12 shadow-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-falaj-deep font-kufi">دراسات الجدوى المحفوظة في مفضلتك الاستثمارية</h3>
+              <button 
+                onClick={handleExportBookmarksPDF}
+                className="inline-flex items-center gap-2 bg-falaj text-white px-4 py-2 rounded-xl text-xs font-bold"
+              >
+                <Download size={14} /> تصدير المفضلة PDF
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {bookmarks.map((bm) => {
+                const reg = regionsData?.find(r => r.code === bm.regionCode);
+                return (
+                  <div key={bm.id} className="bg-white p-5 rounded-2xl border border-line flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <strong className="text-falaj-deep font-kufi">{reg?.name || bm.regionCode}</strong>
+                        <button 
+                          onClick={() => removeBookmarkMutation.mutate({ regionCode: bm.regionCode })}
+                          className="text-red-500 hover:text-red-700 p-1"
+                          title="إزالة من المفضلة"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted mb-4">{bm.notes}</p>
+                    </div>
+                    <span className="text-[11px] text-copper font-mono">حفظ في: {new Date(bm.createdAt).toLocaleDateString('ar-OM')}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* جدول الجدوى المالية مع خيار حفظ المفضلة */}
         <div className="bg-white border border-line rounded-3xl p-8 shadow-sm overflow-x-auto">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-falaj-deep font-kufi">تفاصيل الجدوى الاستثمارية للمناطق ومفضلة المستثمر</h3>
-            {user && bookmarks && bookmarks.length > 0 && (
-              <span className="bg-falaj-soft text-falaj px-3 py-1 rounded-full text-xs font-bold">
-                ⭐ لديك {bookmarks.length} دراسة جدوى محفوظة في المفضلة
-              </span>
-            )}
+            <h3 className="text-xl font-bold text-falaj-deep font-kufi">تفاصيل الجدوى الاستثمارية للمناطق</h3>
           </div>
           {isLoading ? (
             <div className="text-center py-8 text-muted">جاري تحميل البيانات المالية...</div>

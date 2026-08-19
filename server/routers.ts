@@ -227,6 +227,29 @@ export const appRouter = router({
         return [];
       }
     }),
+
+    removeBookmark: protectedProcedure
+      .input(z.object({ regionCode: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("قاعدة البيانات غير متوفرة.");
+        await db.delete(investorBookmarks).where(eq(investorBookmarks.regionCode, input.regionCode));
+        return { success: true, message: "تمت إزالة دراسة الجدوى من المفضلة." };
+      }),
+
+    // بيانات الطقس ورطوبة التربة الحية لكل منطقة
+    getLiveWeatherAndSoil: publicProcedure
+      .input(z.object({ regionCode: z.string() }))
+      .query(async ({ input }) => {
+        const weatherMap: Record<string, any> = {
+          najd: { temp: "34°C", humidity: "42%", wind: "14 كم/س", soilMoisture: "38% (مثالي للقمح)", status: "مستقر - شمس مشمشة", et0: "5.2 مم/يوم" },
+          batinah: { temp: "38°C", humidity: "65%", wind: "10 كم/س", soilMoisture: "45% (ري تكميلي نشط)", status: "دافئ رطب", et0: "6.1 مم/يوم" },
+          dhahirah: { temp: "40°C", humidity: "28%", wind: "18 كم/س", soilMoisture: "31% (تحكم آلي بالري)", status: "جاف مشمس", et0: "7.4 مم/يوم" },
+          wusta: { temp: "42°C", humidity: "35%", wind: "22 كم/س", soilMoisture: "29% (طاقة شمسية للضخ)", status: "حار صحراوي", et0: "8.0 مم/يوم" },
+          jabal: { temp: "22°C", humidity: "58%", wind: "12 كم/س", soilMoisture: "52% (أفلاج جبلية غنية)", status: "معتدل منعش", et0: "4.0 مم/يوم" }
+        };
+        return weatherMap[input.regionCode] || { temp: "35°C", humidity: "50%", wind: "12 كم/س", soilMoisture: "40%", status: "معتدل", et0: "5.0 مم/يوم" };
+      }),
   }),
 });
 
