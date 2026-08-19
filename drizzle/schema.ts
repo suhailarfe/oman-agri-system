@@ -101,3 +101,19 @@ export const investorBookmarks = mysqlTable("investor_bookmarks", {
 
 export type InvestorBookmark = typeof investorBookmarks.$inferSelect;
 export type InsertInvestorBookmark = typeof investorBookmarks.$inferInsert;
+
+
+export const partnershipContracts = mysqlTable("partnership_contracts", {
+  id: int("id").autoincrement().primaryKey(),
+  userOpenId: varchar("userOpenId", { length: 64 }).notNull(),
+  investorName: varchar("investorName", { length: 128 }).notNull(),
+  regionCode: varchar("regionCode", { length: 32 }).notNull(),
+  investmentAmountOMR: varchar("investmentAmountOMR", { length: 64 }).notNull(),
+  sharePercent: varchar("sharePercent", { length: 32 }).notNull(),
+  signatureHash: text("signatureHash").notNull(),
+  status: varchar("status", { length: 32 }).default("signed").notNull(),
+  signedAt: timestamp("signedAt").defaultNow().notNull(),
+});
+
+export type PartnershipContract = typeof partnershipContracts.$inferSelect;
+export type InsertPartnershipContract = typeof partnershipContracts.$inferInsert;
