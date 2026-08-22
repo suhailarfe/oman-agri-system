@@ -1,11 +1,11 @@
 /*
- * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع تصفية وبحث العقود، تلميحات الرسم التاريخي، وحالات التحميل لـ PDF
+ * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع إشعارات المشرفين، فرز العقود حسب القيمة، ومعاينة PDF قبل التنزيل
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2, FileText, QrCode, Loader2, Filter } from "lucide-react";
+import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2, FileText, QrCode, Loader2, Filter, Bell, Eye, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 export default function FinancialFeasibilityPage() {
@@ -21,11 +21,13 @@ export default function FinancialFeasibilityPage() {
   const [investorFullName, setInvestorFullName] = useState("");
   const [selectedContractRegion, setSelectedContractRegion] = useState("najd");
 
-  // أدوات تصفية وبحث العقود حسب التاريخ أو الحالة
+  // أدوات تصفية وبحث وفرز متقدم للعقود حسب القيمة والمبلغ
   const [contractSearch, setContractSearch] = useState("");
   const [contractStatusFilter, setContractStatusFilter] = useState("all");
+  const [contractSortBy, setContractSortBy] = useState("newest"); // 'newest' | 'amount_desc' | 'amount_asc'
 
-  // حالات تحميل ونجاح تصدير PDF
+  // حالات معاينة PDF وتصديره
+  const [showPdfPreviewModal, setShowPdfPreviewModal] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportSuccessMsg, setExportSuccessMsg] = useState("");
 
@@ -36,6 +38,7 @@ export default function FinancialFeasibilityPage() {
   const { data: bookmarks } = trpc.agri.getBookmarks.useQuery(undefined, { enabled: !!user });
   const { data: liveWeather } = trpc.agri.getLiveWeatherAndSoil.useQuery({ regionCode: activeSatelliteRegion });
   const { data: contracts } = trpc.agri.getContracts.useQuery(undefined, { enabled: !!user });
+  const { data: adminNotifications } = trpc.agri.getAdminNotifications.useQuery(undefined, { enabled: !!user });
 
   const saveBookmarkMutation = trpc.agri.saveBookmark.useMutation({
     onSuccess: (res) => {
@@ -56,6 +59,7 @@ export default function FinancialFeasibilityPage() {
     onSuccess: (res) => {
       alert(res.message);
       utils.agri.getContracts.invalidate();
+      utils.agri.getAdminNotifications.invalidate();
       setInvestorFullName("");
     },
     onError: (err) => alert(err.message)
@@ -67,10 +71,20 @@ export default function FinancialFeasibilityPage() {
     return matchesSearch && matchesRisk;
   });
 
+  // تصفية وفرز العقود بناءً على الحالة والبحث وحجم الاستثمار والمبلغ
   const filteredContracts = contracts?.filter((c) => {
     const matchesText = c.investorName.includes(contractSearch) || c.signatureHash.includes(contractSearch) || c.regionCode.includes(contractSearch);
     const matchesStatus = contractStatusFilter === "all" || c.status === contractStatusFilter;
     return matchesText && matchesStatus;
+  }).sort((a, b) => {
+    if (contractSortBy === 'amount_desc' || contractSortBy === 'amount_asc') {
+      const getNum = (str: string) => parseInt(str.replace(/[^0-9]/g, '')) || 0;
+      const valA = getNum(a.investmentAmountOMR);
+      const valB = getNum(b.investmentAmountOMR);
+      return contractSortBy === 'amount_desc' ? valB - valA : valA - valB;
+    }
+    // الافتراضي والأحدث
+    return new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime();
   });
 
   const handleExportExcel = () => {
@@ -93,6 +107,7 @@ export default function FinancialFeasibilityPage() {
   const handleExportGraphicalPDF = () => {
     setIsExportingPDF(true);
     setExportSuccessMsg("");
+    setShowPdfPreviewModal(false);
     setTimeout(() => {
       setIsExportingPDF(false);
       setExportSuccessMsg("تم إنشاء وتصدير تقرير PDF الرسومي المتضمن رمز الاستجابة السريعة (QR) بنجاح!");
@@ -161,7 +176,7 @@ export default function FinancialFeasibilityPage() {
           <div>
             <span className="text-copper text-xs font-bold tracking-widest uppercase mb-2 block">المنظومة الاستثمارية المتقدمة — رؤية 2040</span>
             <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى ومقارنة الفرص وعقود الشراكة</h1>
-            <p className="text-muted mt-2">مقارنة الفرص، رصد الطقس وحساسات رطوبة التربة بتلميحات تاريخية، تقارير PDF مع QR، وإدارة العقود ببحث متقدم.</p>
+            <p className="text-muted mt-2">إشعارات فورية للمشرفين، فرز العقود حسب الاستثمار، معاينة PDF التفاعلية، ورسومات رطوبة التربة التاريخية.</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <button 
@@ -171,12 +186,10 @@ export default function FinancialFeasibilityPage() {
               <FileSpreadsheet size={16} /> تصدير Excel
             </button>
             <button 
-              onClick={handleExportGraphicalPDF}
-              disabled={isExportingPDF}
+              onClick={() => setShowPdfPreviewModal(true)}
               className="inline-flex items-center gap-2 bg-copper hover:bg-copper/90 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-md text-xs"
             >
-              {isExportingPDF ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-              {isExportingPDF ? "جاري إنشاء التقرير..." : "تصدير تقرير PDF مع QR"}
+              <Eye size={16} /> معاينة تقرير PDF مع QR
             </button>
           </div>
         </div>
@@ -185,6 +198,37 @@ export default function FinancialFeasibilityPage() {
           <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-2xl mb-8 flex items-center gap-3 font-bold text-sm">
             <CheckCircle2 size={20} className="text-green-600" />
             {exportSuccessMsg}
+          </div>
+        )}
+
+        {/* قسم إشعارات المشرفين الفورية بالعقود الجديدة */}
+        {user && (
+          <div className="bg-white border border-line rounded-3xl p-6 mb-12 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-falaj-deep">
+                <Bell size={20} className="text-copper animate-bounce" />
+                <h3 className="font-bold font-kufi text-base">مركز إشعارات المشرفين (العقود الاستثمارية الموقعة حديثاً)</h3>
+              </div>
+              <span className="bg-falaj/10 text-falaj text-xs font-bold px-3 py-1 rounded-full">
+                {adminNotifications?.length || 0} عقود نشطة
+              </span>
+            </div>
+            {adminNotifications && adminNotifications.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {adminNotifications.slice(0, 3).map(notif => (
+                  <div key={notif.id} className="bg-paper p-4 rounded-2xl border border-line text-xs">
+                    <div className="flex justify-between items-center mb-1">
+                      <strong className="text-falaj-deep">{notif.investorName}</strong>
+                      <span className="text-green-700 font-bold">مكتمل</span>
+                    </div>
+                    <p className="text-muted mb-1">المنطقة: {notif.regionCode} | القيمة: {notif.investmentAmountOMR}</p>
+                    <span className="font-mono text-[10px] text-copper">التوثيق: {notif.signatureHash}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted">لا توجد إشعارات عقود جديدة حالياً.</p>
+            )}
           </div>
         )}
 
@@ -273,11 +317,11 @@ export default function FinancialFeasibilityPage() {
           )}
         </div>
 
-        {/* قسم التوقيع الرقمي ومراجعة العقود مع أدوات التصفية والبحث المتقدمة */}
+        {/* قسم التوقيع الرقمي ومراجعة العقود مع التصفية والبحث وفرز القيمة المالية */}
         <div className="bg-white border border-line rounded-3xl p-8 mb-12 shadow-sm">
           <div className="flex items-center gap-3 text-falaj mb-6">
             <Award size={26} />
-            <h3 className="text-xl font-bold font-kufi">عقود الشراكة الرقمية ومسودات التحميل مع التصفية والبحث</h3>
+            <h3 className="text-xl font-bold font-kufi">عقود الشراكة الرقمية ومسودات التحميل والفرز المالي</h3>
           </div>
           {user ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -329,24 +373,25 @@ export default function FinancialFeasibilityPage() {
               <div className="bg-paper p-6 rounded-2xl border border-line">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                   <h4 className="text-lg font-bold text-falaj-deep font-kufi">مراجعة وتحميل مسودات العقود</h4>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-48">
+                  <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                    <div className="relative flex-1 sm:w-40">
                       <Search className="absolute right-3 top-2.5 text-muted" size={14} />
                       <input 
                         type="text"
                         value={contractSearch}
                         onChange={(e) => setContractSearch(e.target.value)}
-                        placeholder="بحث برمز التوثيق أو الاسم..."
+                        placeholder="بحث برمز التوثيق..."
                         className="w-full pr-8 pl-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none"
                       />
                     </div>
                     <select 
-                      value={contractStatusFilter}
-                      onChange={(e) => setContractStatusFilter(e.target.value)}
-                      className="px-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none"
+                      value={contractSortBy}
+                      onChange={(e) => setContractSortBy(e.target.value)}
+                      className="px-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none font-bold"
                     >
-                      <option value="all">جميع الحالات</option>
-                      <option value="active_signed">معتمد ونشط</option>
+                      <option value="newest">الأحدث توقيعاً</option>
+                      <option value="amount_desc">حجم الاستثمار (من الأعلى للأقل)</option>
+                      <option value="amount_asc">حجم الاستثمار (من الأقل للأعلى)</option>
                     </select>
                   </div>
                 </div>
@@ -360,7 +405,7 @@ export default function FinancialFeasibilityPage() {
                             <strong className="text-falaj-deep">{c.investorName}</strong>
                             <span className="text-green-700 font-bold flex items-center gap-1"><CheckCircle2 size={12} /> موثق</span>
                           </div>
-                          <p className="text-muted mb-1">المنطقة: {c.regionCode} | القيمة: {c.investmentAmountOMR}</p>
+                          <p className="text-muted mb-1">المنطقة: {c.regionCode} | القيمة: <strong className="text-falaj">{c.investmentAmountOMR}</strong></p>
                           <p className="font-mono text-[10px] text-copper">التوقيع: {c.signatureHash}</p>
                         </div>
                         <div className="flex flex-col items-center gap-2">
@@ -378,7 +423,7 @@ export default function FinancialFeasibilityPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted">لا توجد عقود مطابقة لنتائج البحث.</p>
+                  <p className="text-sm text-muted">لا توجد عقود مطابقة لنتائج البحث أو الفرز.</p>
                 )}
               </div>
             </div>
@@ -389,6 +434,57 @@ export default function FinancialFeasibilityPage() {
             </div>
           )}
         </div>
+
+        {/* نافذة معاينة تقرير PDF التفاعلية قبل التحميل */}
+        {showPdfPreviewModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+              <button 
+                onClick={() => setShowPdfPreviewModal(false)}
+                className="absolute left-6 top-6 text-muted hover:text-ink bg-paper p-2 rounded-full"
+              >
+                <X size={20} />
+              </button>
+              
+              <div className="flex items-center gap-3 text-falaj mb-4">
+                <FileText size={26} />
+                <h3 className="text-2xl font-bold font-kufi">معاينة تقرير الجدوى المالية ورمز التحقق (QR)</h3>
+              </div>
+              <p className="text-muted text-xs mb-6">هذه معاينة حية للتقرير الاستثماري الرسمي المزمع تصديره وطباعته بصيغة PDF.</p>
+
+              <div className="bg-paper p-6 rounded-2xl border border-line mb-6 max-h-64 overflow-y-auto text-xs space-y-3 font-mono">
+                <div className="flex justify-between font-bold text-falaj-deep border-b pb-2">
+                  <span>وزارة الثروة الزراعية والسمكية وموارد المياه</span>
+                  <span>رؤية عُمان 2040</span>
+                </div>
+                <p><strong>العنوان:</strong> تقرير الجدوى الاستثمارية الشاملة ومقارنة العوائد الإقليمية.</p>
+                <p><strong>إجمالي المناطق المستهدفة:</strong> {feasibilityRows?.length || 5} مناطق استراتيجية.</p>
+                <p><strong>مستوى التدقيق الأمني:</strong> معتمد برمز تحقق رقمي ورمز استجابة سريعة (QR Code).</p>
+                <div className="p-3 bg-white rounded border border-line flex items-center justify-between">
+                  <span>نموذج رمز التوثيق المدمج:</span>
+                  <QrCode size={32} className="text-falaj" />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setShowPdfPreviewModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-line text-ink font-bold text-xs"
+                >
+                  إلغاء
+                </button>
+                <button 
+                  onClick={handleExportGraphicalPDF}
+                  disabled={isExportingPDF}
+                  className="inline-flex items-center gap-2 bg-falaj hover:bg-falaj-deep text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-md"
+                >
+                  {isExportingPDF ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+                  {isExportingPDF ? "جاري التصدير..." : "تأكيد وتنزيل التقرير نهائياً"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* تذليل تقارير PDF الرسومية مع رمز QR للتحقق */}
         <div id="pdf-report-footer" className="hidden print:block bg-white p-6 border-t-2 border-falaj mt-8">

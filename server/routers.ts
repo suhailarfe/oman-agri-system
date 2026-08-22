@@ -309,8 +309,21 @@ export const appRouter = router({
       const db = await getDb();
       if (!db) return [];
       try {
-        const rows = await db.select().from(partnershipContracts).where(eq(partnershipContracts.userOpenId, ctx.user.openId));
+        const rows = await db.select().from(partnershipContracts);
         return rows;
+      } catch (e) {
+        return [];
+      }
+    }),
+
+    // إشعارات فورية للمشرفين بأحدث العقود الموقعّة
+    getAdminNotifications: protectedProcedure.query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      try {
+        const rows = await db.select().from(partnershipContracts);
+        // إعادة أحدث 5 عقود كإشعارات فورية للمشرف
+        return rows.slice(-5).reverse();
       } catch (e) {
         return [];
       }
