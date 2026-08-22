@@ -1,5 +1,5 @@
 import { asc, desc, eq } from "drizzle-orm";
-import { mvpDocumentVersions, roadmapMilestones, roadmapProgressAudits } from "../drizzle/schema";
+import { appNotifications, mvpDocumentVersions, roadmapMilestones, roadmapProgressAudits, users } from "../drizzle/schema";
 import { getDb } from "./db";
 import { createRoleAwareExport } from "./documentAccess";
 import { buildRoadmapProgressAudit } from "./roadmapAudit";
@@ -171,9 +171,9 @@ export async function setRoadmapProgress(
   return listRoadmapMilestones();
 }
 
-export async function listRoadmapProgressAudits() {
+export async function listRoadmapProgressAudits(filters: { query?: string; fromDate?: string; toDate?: string } = {}) {
   const db = await requireDb();
-  return db
+  const rows = await db
     .select({
       id: roadmapProgressAudits.id,
       milestoneCode: roadmapProgressAudits.milestoneCode,
@@ -187,7 +187,52 @@ export async function listRoadmapProgressAudits() {
     .from(roadmapProgressAudits)
     .innerJoin(roadmapMilestones, eq(roadmapProgressAudits.milestoneCode, roadmapMilestones.code))
     .orderBy(desc(roadmapProgressAudits.changedAt))
-    .limit(20);
+    .limit(250);
+
+  const query = filters.query?.trim().toLocaleLowerCase();
+  const fromTime = filters.fromDate ? new Date(`${filters.fromDate}T00:00:00.000Z`).getTime() : null;
+  const toTime = filters.toDate ? new Date(`${filters.toDate}T23:59:59.999Z`).getTime() : null;
+
+  return rows.filter((row) => {
+    const changedAt = new Date(row.changedAt).getTime();
+    const matchesQuery = !query || `${row.changedByName ?? ""} ${row.milestoneTitle} ${row.reason}`.toLocaleLowerCase().includes(query);
+    return matchesQuery && (fromTime === null || changedAt >= fromTime) && (toTime === null || changedAt <= toTime);
+  });
+}
+
+async function createRoleNotification(input: {
+  recipientRole: "admin" | "user";
+  type: "draft" | "published" | "system";
+  title: string;
+  content: string;
+  documentKey?: string;
+}) {
+  const db = await requireDb();
+  const recipients = await db
+    .select({ openId: users.openId })
+    .from(users)
+    .where(eq(users.role, input.recipientRole));
+  if (recipients.length === 0) return;
+  await db.insert(appNotifications).values(recipients.map((recipient) => ({ ...input, recipientOpenId: recipient.openId })));
+}
+
+export async function listAppNotifications(openId: string) {
+  const db = await requireDb();
+  return db
+    .select()
+    .from(appNotifications)
+    .where(eq(appNotifications.recipientOpenId, openId))
+    .orderBy(desc(appNotifications.createdAt))
+    .limit(30);
+}
+
+export async function markAppNotificationRead(id: number, openId: string) {
+  const db = await requireDb();
+  const rows = await db.select().from(appNotifications).where(eq(appNotifications.id, id)).limit(1);
+  const notification = rows[0];
+  if (!notification || notification.recipientOpenId !== openId) throw new Error("الإشعار المطلوب غير متاح لهذا الحساب.");
+  await db.update(appNotifications).set({ isRead: 1 }).where(eq(appNotifications.id, id));
+  return { id, isRead: true };
 }
 
 export async function listCurrentDocuments(role: "admin" | "user") {
@@ -237,6 +282,13 @@ export async function createDocumentDraft(input: {
     accessLevel: "admin",
     publicationState: "draft",
   });
+  await createRoleNotification({
+    recipientRole: "admin",
+    type: "draft",
+    title: "مسودة مواصفات بانتظار الاعتماد",
+    content: `المسودة ${input.versionTag} من وثيقة ${input.title} جاهزة للمراجعة والاعتماد.`,
+    documentKey: input.documentKey,
+  });
   return listDocumentHistory(input.documentKey);
 }
 
@@ -254,6 +306,16 @@ export async function approveDocumentVersion(input: {
     .update(mvpDocumentVersions)
     .set(buildVersionApproval(input.releaseToInvestors, input.approvalNote, input.approvedByOpenId))
     .where(eq(mvpDocumentVersions.id, input.id));
+
+  if (input.releaseToInvestors) {
+    await createRoleNotification({
+      recipientRole: "user",
+      type: "published",
+      title: "نُشر إصدار جديد من المواصفات",
+      content: `أصبح الإصدار ${version.versionTag} من وثيقة ${version.title} متاحاً للمستثمرين.`,
+      documentKey: version.documentKey,
+    });
+  }
 
   return listDocumentHistory(version.documentKey);
 }

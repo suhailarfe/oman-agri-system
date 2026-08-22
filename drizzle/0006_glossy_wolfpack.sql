@@ -1,0 +1,1 @@
+ALTER TABLE `app_notifications` ADD `recipientOpenId` varchar(64);

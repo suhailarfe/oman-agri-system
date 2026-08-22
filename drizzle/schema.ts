@@ -168,3 +168,17 @@ export const roadmapProgressAudits = mysqlTable("roadmap_progress_audits", {
 });
 
 export type RoadmapProgressAudit = typeof roadmapProgressAudits.$inferSelect;
+
+export const appNotifications = mysqlTable("app_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientRole: mysqlEnum("recipientRole", ["admin", "user"]).notNull(),
+  recipientOpenId: varchar("recipientOpenId", { length: 64 }),
+  type: mysqlEnum("type", ["draft", "published", "system"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  documentKey: varchar("documentKey", { length: 96 }),
+  isRead: int("isRead").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AppNotification = typeof appNotifications.$inferSelect;

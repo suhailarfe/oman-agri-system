@@ -36,6 +36,20 @@
       "when": 1787366846418,
       "tag": "0004_dusty_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1787367630422,
+      "tag": "0005_dusty_talos",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1787367771079,
+      "tag": "0006_glossy_wolfpack",
+      "breakpoints": true
     }
   ]
 }
