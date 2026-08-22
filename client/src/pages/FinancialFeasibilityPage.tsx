@@ -1,11 +1,11 @@
 /*
- * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع إشعارات المشرفين، فرز العقود حسب القيمة، ومعاينة PDF قبل التنزيل
+ * صفحة دراسة الجدوى المالية المتقدمة والمحدثة مع شارة الإشعارات، نطاق التصفية المالي، وتكبير/تصغير معاينة PDF
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2, FileText, QrCode, Loader2, Filter, Bell, Eye, X } from "lucide-react";
+import { ArrowRight, Search, FileSpreadsheet, BarChart3, TrendingUp, Bookmark, Globe, CloudSun, Droplet, Trash2, Download, Scale, Award, AlertTriangle, CheckCircle2, FileText, QrCode, Loader2, Filter, Bell, Eye, X, ZoomIn, ZoomOut } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 export default function FinancialFeasibilityPage() {
@@ -21,13 +21,16 @@ export default function FinancialFeasibilityPage() {
   const [investorFullName, setInvestorFullName] = useState("");
   const [selectedContractRegion, setSelectedContractRegion] = useState("najd");
 
-  // أدوات تصفية وبحث وفرز متقدم للعقود حسب القيمة والمبلغ
+  // أدوات تصفية وبحث وفرز متقدم للعقود حسب القيمة والمبلغ والنطاق المخصص
   const [contractSearch, setContractSearch] = useState("");
   const [contractStatusFilter, setContractStatusFilter] = useState("all");
-  const [contractSortBy, setContractSortBy] = useState("newest"); // 'newest' | 'amount_desc' | 'amount_asc'
+  const [contractSortBy, setContractSortBy] = useState("newest");
+  const [minAmountFilter, setMinAmountFilter] = useState<number>(0);
+  const [maxAmountFilter, setMaxAmountFilter] = useState<number>(1000000);
 
-  // حالات معاينة PDF وتصديره
+  // حالات معاينة PDF وتصديره وتكبيره وتصغيره
   const [showPdfPreviewModal, setShowPdfPreviewModal] = useState(false);
+  const [pdfZoomLevel, setPdfZoomLevel] = useState<number>(100);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [exportSuccessMsg, setExportSuccessMsg] = useState("");
 
@@ -71,11 +74,16 @@ export default function FinancialFeasibilityPage() {
     return matchesSearch && matchesRisk;
   });
 
-  // تصفية وفرز العقود بناءً على الحالة والبحث وحجم الاستثمار والمبلغ
+  // تصفية وفرز العقود بناءً على الحالة والبحث والنطاق المخصص للمبالغ المالية
   const filteredContracts = contracts?.filter((c) => {
     const matchesText = c.investorName.includes(contractSearch) || c.signatureHash.includes(contractSearch) || c.regionCode.includes(contractSearch);
     const matchesStatus = contractStatusFilter === "all" || c.status === contractStatusFilter;
-    return matchesText && matchesStatus;
+    
+    // استخراج المبلغ الرقمي من النص للمقارنة بالنطاق
+    const numericAmount = parseInt(c.investmentAmountOMR.replace(/[^0-9]/g, '')) || 0;
+    const matchesRange = numericAmount >= minAmountFilter && numericAmount <= maxAmountFilter;
+
+    return matchesText && matchesStatus && matchesRange;
   }).sort((a, b) => {
     if (contractSortBy === 'amount_desc' || contractSortBy === 'amount_asc') {
       const getNum = (str: string) => parseInt(str.replace(/[^0-9]/g, '')) || 0;
@@ -83,7 +91,6 @@ export default function FinancialFeasibilityPage() {
       const valB = getNum(b.investmentAmountOMR);
       return contractSortBy === 'amount_desc' ? valB - valA : valA - valB;
     }
-    // الافتراضي والأحدث
     return new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime();
   });
 
@@ -141,12 +148,6 @@ export default function FinancialFeasibilityPage() {
     document.body.removeChild(link);
   };
 
-  const chartData = feasibilityRows?.map(r => ({
-    name: r.regionName,
-    capex: parseFloat(r.capexMillionOMR),
-    irr: parseFloat(r.irrPercent.replace("%", "")),
-  })) || [];
-
   const selectedRegionDetails = regionsData?.find(r => r.code === activeSatelliteRegion);
   const row1 = feasibilityRows?.find(r => r.regionCode === compareRegion1);
   const row2 = feasibilityRows?.find(r => r.regionCode === compareRegion2);
@@ -158,6 +159,8 @@ export default function FinancialFeasibilityPage() {
     { name: "احتياطي الصندوق الزراعي", value: annualReturnAmount * 0.2 },
   ];
   const COLORS = ['#1F5A45', '#b97a4c', '#2c7a5d'];
+
+  const unreadCount = adminNotifications?.length || 0;
 
   return (
     <div className="site-shell" dir="rtl">
@@ -176,7 +179,7 @@ export default function FinancialFeasibilityPage() {
           <div>
             <span className="text-copper text-xs font-bold tracking-widest uppercase mb-2 block">المنظومة الاستثمارية المتقدمة — رؤية 2040</span>
             <h1 className="text-3xl md:text-5xl font-extrabold text-falaj-deep font-kufi">دراسة الجدوى ومقارنة الفرص وعقود الشراكة</h1>
-            <p className="text-muted mt-2">إشعارات فورية للمشرفين، فرز العقود حسب الاستثمار، معاينة PDF التفاعلية، ورسومات رطوبة التربة التاريخية.</p>
+            <p className="text-muted mt-2">إشعارات فورية بشارة غير المقروء، نطاق مالي مخصص للتصفية، معاينة PDF مع تكبير وتصغير، ورسومات رطوبة التربة.</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <button 
@@ -201,16 +204,21 @@ export default function FinancialFeasibilityPage() {
           </div>
         )}
 
-        {/* قسم إشعارات المشرفين الفورية بالعقود الجديدة */}
+        {/* قسم إشعارات المشرفين الفورية مع شارة العقود غير المقروءة */}
         {user && (
           <div className="bg-white border border-line rounded-3xl p-6 mb-12 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-falaj-deep">
+              <div className="flex items-center gap-2 text-falaj-deep relative">
                 <Bell size={20} className="text-copper animate-bounce" />
-                <h3 className="font-bold font-kufi text-base">مركز إشعارات المشرفين (العقود الاستثمارية الموقعة حديثاً)</h3>
+                <h3 className="font-bold font-kufi text-base">مركز إشعارات المشرفين (عقود الشراكة الموقعة)</h3>
+                {unreadCount > 0 && (
+                  <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    {unreadCount} جديدة
+                  </span>
+                )}
               </div>
               <span className="bg-falaj/10 text-falaj text-xs font-bold px-3 py-1 rounded-full">
-                {adminNotifications?.length || 0} عقود نشطة
+                {unreadCount} عقود مسجلة
               </span>
             </div>
             {adminNotifications && adminNotifications.length > 0 ? (
@@ -317,11 +325,11 @@ export default function FinancialFeasibilityPage() {
           )}
         </div>
 
-        {/* قسم التوقيع الرقمي ومراجعة العقود مع التصفية والبحث وفرز القيمة المالية */}
+        {/* قسم التوقيع الرقمي ومراجعة العقود مع التصفية والبحث والنطاق المالي المخصص */}
         <div className="bg-white border border-line rounded-3xl p-8 mb-12 shadow-sm">
           <div className="flex items-center gap-3 text-falaj mb-6">
             <Award size={26} />
-            <h3 className="text-xl font-bold font-kufi">عقود الشراكة الرقمية ومسودات التحميل والفرز المالي</h3>
+            <h3 className="text-xl font-bold font-kufi">عقود الشراكة الرقمية ومسودات التحميل والفرز بالنطاق المالي</h3>
           </div>
           {user ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -371,33 +379,51 @@ export default function FinancialFeasibilityPage() {
               </div>
 
               <div className="bg-paper p-6 rounded-2xl border border-line">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                  <h4 className="text-lg font-bold text-falaj-deep font-kufi">مراجعة وتحميل مسودات العقود</h4>
-                  <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-                    <div className="relative flex-1 sm:w-40">
-                      <Search className="absolute right-3 top-2.5 text-muted" size={14} />
-                      <input 
-                        type="text"
-                        value={contractSearch}
-                        onChange={(e) => setContractSearch(e.target.value)}
-                        placeholder="بحث برمز التوثيق..."
-                        className="w-full pr-8 pl-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none"
-                      />
-                    </div>
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-bold text-falaj-deep font-kufi">مراجعة وتحميل مسودات العقود</h4>
+                    <span className="text-xs text-muted">{filteredContracts?.length || 0} عقد مطابق</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input 
+                      type="text"
+                      value={contractSearch}
+                      onChange={(e) => setContractSearch(e.target.value)}
+                      placeholder="بحث بالاسم أو التوثيق..."
+                      className="px-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none"
+                    />
                     <select 
                       value={contractSortBy}
                       onChange={(e) => setContractSortBy(e.target.value)}
                       className="px-3 py-1.5 bg-white border border-line rounded-lg text-xs outline-none font-bold"
                     >
                       <option value="newest">الأحدث توقيعاً</option>
-                      <option value="amount_desc">حجم الاستثمار (من الأعلى للأقل)</option>
-                      <option value="amount_asc">حجم الاستثمار (من الأقل للأعلى)</option>
+                      <option value="amount_desc">المبلغ: الأعلى للأقل</option>
+                      <option value="amount_asc">المبلغ: الأقل للأعلى</option>
                     </select>
+                    <div className="flex items-center gap-1 text-[10px]">
+                      <input 
+                        type="number" 
+                        value={minAmountFilter} 
+                        onChange={(e) => setMinAmountFilter(Number(e.target.value))}
+                        placeholder="الحد الأدنى" 
+                        className="w-1/2 p-1.5 bg-white border border-line rounded"
+                      />
+                      <span>إلى</span>
+                      <input 
+                        type="number" 
+                        value={maxAmountFilter} 
+                        onChange={(e) => setMaxAmountFilter(Number(e.target.value))}
+                        placeholder="الحد الأقصى" 
+                        className="w-1/2 p-1.5 bg-white border border-line rounded"
+                      />
+                    </div>
                   </div>
                 </div>
 
                 {filteredContracts && filteredContracts.length > 0 ? (
-                  <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
                     {filteredContracts.map(c => (
                       <div key={c.id} className="bg-white p-4 rounded-xl border border-line flex items-center justify-between gap-4">
                         <div className="text-xs">
@@ -423,7 +449,7 @@ export default function FinancialFeasibilityPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted">لا توجد عقود مطابقة لنتائج البحث أو الفرز.</p>
+                  <p className="text-sm text-muted">لا توجد عقود مطابقة للنطاق المالي أو نتائج البحث.</p>
                 )}
               </div>
             </div>
@@ -435,7 +461,7 @@ export default function FinancialFeasibilityPage() {
           )}
         </div>
 
-        {/* نافذة معاينة تقرير PDF التفاعلية قبل التحميل */}
+        {/* نافذة معاينة تقرير PDF التفاعلية مع خيارات التكبير والتصغير */}
         {showPdfPreviewModal && (
           <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative animate-in fade-in zoom-in duration-200">
@@ -446,13 +472,38 @@ export default function FinancialFeasibilityPage() {
                 <X size={20} />
               </button>
               
-              <div className="flex items-center gap-3 text-falaj mb-4">
-                <FileText size={26} />
-                <h3 className="text-2xl font-bold font-kufi">معاينة تقرير الجدوى المالية ورمز التحقق (QR)</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3 text-falaj">
+                  <FileText size={26} />
+                  <h3 className="text-2xl font-bold font-kufi">معاينة تقرير الجدوى المالية ورمز QR</h3>
+                </div>
+                
+                {/* أزرار التكبير والتصغير */}
+                <div className="flex items-center gap-1 bg-paper p-1 rounded-xl border border-line">
+                  <button 
+                    onClick={() => setPdfZoomLevel(prev => Math.max(70, prev - 15))}
+                    className="p-1.5 hover:bg-white rounded-lg text-ink"
+                    title="تصغير"
+                  >
+                    <ZoomOut size={16} />
+                  </button>
+                  <span className="text-xs font-mono font-bold px-2">{pdfZoomLevel}%</span>
+                  <button 
+                    onClick={() => setPdfZoomLevel(prev => Math.min(150, prev + 15))}
+                    className="p-1.5 hover:bg-white rounded-lg text-ink"
+                    title="تكبير"
+                  >
+                    <ZoomIn size={16} />
+                  </button>
+                </div>
               </div>
-              <p className="text-muted text-xs mb-6">هذه معاينة حية للتقرير الاستثماري الرسمي المزمع تصديره وطباعته بصيغة PDF.</p>
 
-              <div className="bg-paper p-6 rounded-2xl border border-line mb-6 max-h-64 overflow-y-auto text-xs space-y-3 font-mono">
+              <p className="text-muted text-xs mb-4">هذه معاينة حية للتقرير الاستثماري الرسمي المزمع تصديره وطباعته بصيغة PDF.</p>
+
+              <div 
+                style={{ fontSize: `${pdfZoomLevel}%` }}
+                className="bg-paper p-6 rounded-2xl border border-line mb-6 max-h-60 overflow-y-auto space-y-3 font-mono transition-all"
+              >
                 <div className="flex justify-between font-bold text-falaj-deep border-b pb-2">
                   <span>وزارة الثروة الزراعية والسمكية وموارد المياه</span>
                   <span>رؤية عُمان 2040</span>
