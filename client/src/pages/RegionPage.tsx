@@ -1,9 +1,9 @@
 /*
- * صفحة تفصيلية مستقلة لكل منطقة زراعية: تشمل خريطة مسار القيادة، رسوماً بيانية تاريخية لجودة المياه، نموذج حجز محسّن بنافذة تأكيد منبثقة، وعرض الطقس الحي.
+ * صفحة تفصيلية مستقلة لكل منطقة زراعية: تشمل خريطة مسار القيادة، رسوماً تاريخية لجودة المياه مع تصدير PDF/صور، وتنبيهات ملوحة، وتوقعات الطقس لـ 3 أيام.
  */
 import { useRoute } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { ArrowRight, MapPin, Sprout, Droplets, ShieldCheck, ExternalLink, Compass, Navigation, Layers, Eye, Calendar, CheckCircle2, FlaskConical, Award, CloudSun, Wind, Thermometer, AlertCircle } from "lucide-react";
+import { ArrowRight, MapPin, Sprout, Droplets, ShieldCheck, ExternalLink, Compass, Navigation, Layers, Eye, Calendar, CheckCircle2, FlaskConical, Award, CloudSun, Wind, Thermometer, AlertCircle, Download, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 export default function RegionPage() {
@@ -43,7 +43,7 @@ export default function RegionPage() {
     );
   }
 
-  // بيانات موسعة تشمل إحداثيات GPS، الطقس الحي، والرسوم البيانية التاريخية لجودة المياه للآبار
+  // بيانات موسعة تشمل الطقس مع توقعات 3 أيام والرسوم البيانية التاريخية للآبار مع حدود الملوحة الآمنة
   const regionExtMap: Record<string, { 
     lat: number; 
     lng: number; 
@@ -53,7 +53,14 @@ export default function RegionPage() {
     pano360Url: string;
     distanceFromMuscat: string;
     travelTime: string;
-    weather: { temp: string; condition: string; humidity: string; wind: string; recommendation: string };
+    weather: { 
+      temp: string; 
+      condition: string; 
+      humidity: string; 
+      wind: string; 
+      recommendation: string;
+      forecast: { day: string; temp: string; condition: string }[];
+    };
     wellsAndIrrigation: { 
       name: string; 
       type: string; 
@@ -61,7 +68,7 @@ export default function RegionPage() {
       flowRate: string; 
       status: string; 
       ph: string; 
-      salinity: string; 
+      salinity: number; // رقمي لفحص الحد الآمن (أعلى من 400 تحذير)
       purity: string;
       historicalPh: { month: string; value: number }[];
       historicalSalinity: { month: string; value: number }[];
@@ -76,7 +83,18 @@ export default function RegionPage() {
       pano360Url: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80",
       distanceFromMuscat: "1,020 كم",
       travelTime: "9 ساعات و 45 دقيقة",
-      weather: { temp: "31° مئوية", condition: "مشمس ومناسب للري الصباحي", humidity: "42%", wind: "14 كم/س شمالية غربية", recommendation: "الظروف الجوية ممتازة لزيارة المزارع المحورية وتفقد الآبار العميقـة." },
+      weather: { 
+        temp: "31° مئوية", 
+        condition: "مشمس ومناسب للري الصباحي", 
+        humidity: "42%", 
+        wind: "14 كم/س شمالية غربية", 
+        recommendation: "الظروف الجوية ممتازة لزيارة المزارع المحورية وتفقد الآبار العميقـة.",
+        forecast: [
+          { day: "الغد", temp: "32° مئوية", condition: "مشمس تماماً" },
+          { day: "بعد الغد", temp: "30° مئوية", condition: "غائم جزئياً مع نسيم" },
+          { day: "اليوم الثالث", temp: "33° مئوية", condition: "صافي ومستقر" }
+        ]
+      },
       wellsAndIrrigation: [
         { 
           name: "بئر النجد الاستراتيجي (N-01)", 
@@ -85,7 +103,7 @@ export default function RegionPage() {
           flowRate: "75 جالون/دقيقة", 
           status: "يعمل بالطاقة الشمسية", 
           ph: "7.2 (معتدل)", 
-          salinity: "320 جزء في المليون", 
+          salinity: 320, 
           purity: "ممتازة للاستزراع الاستراتيجي",
           historicalPh: [
             { month: "يناير", value: 7.1 },
@@ -111,7 +129,7 @@ export default function RegionPage() {
           flowRate: "1200 م³/ساعة", 
           status: "نشط بالكامل", 
           ph: "7.4", 
-          salinity: "290 جزء في المليون", 
+          salinity: 290, 
           purity: "مطابقة للمواصفات القياسية",
           historicalPh: [
             { month: "يناير", value: 7.3 },
@@ -141,7 +159,18 @@ export default function RegionPage() {
       pano360Url: "https://images.unsplash.com/photo-1595974482597-4b8da8877ae2?auto=format&fit=crop&w=1600&q=80",
       distanceFromMuscat: "120 كم",
       travelTime: "ساعة و 15 دقيقة",
-      weather: { temp: "34° مئوية", condition: "معتدل مع نسيم بحري", humidity: "65%", wind: "10 كم/س شرقية", recommendation: "طقس رائع لتفقد مزارع الحمضيات والري الذكي." },
+      weather: { 
+        temp: "34° مئوية", 
+        condition: "معتدل مع نسيم بحري", 
+        humidity: "65%", 
+        wind: "10 كم/س شرقية", 
+        recommendation: "طقس رائع لتفقد مزارع الحمضيات والري الذكي.",
+        forecast: [
+          { day: "الغد", temp: "33° مئوية", condition: "مشمس جزئياً" },
+          { day: "بعد الغد", temp: "35° مئوية", condition: "دافئ مع رطوبة معتدلة" },
+          { day: "اليوم الثالث", temp: "34° مئوية", condition: "صافي ولطيف" }
+        ]
+      },
       wellsAndIrrigation: [
         { 
           name: "بئر الساحل الجوفي (BT-14)", 
@@ -150,8 +179,8 @@ export default function RegionPage() {
           flowRate: "45 جالون/دقيقة", 
           status: "حساسات رطوبة ذكية", 
           ph: "7.1", 
-          salinity: "410 جزء في المليون", 
-          purity: "صالحة للمحاصيل الحساسة",
+          salinity: 430, // متجاوز للحد الآمن 400 للتجربة والتحذير المرئي
+          purity: "تحتاج مراقبة ملوحة دورية",
           historicalPh: [
             { month: "يناير", value: 7.0 },
             { month: "فبراير", value: 7.1 },
@@ -161,12 +190,12 @@ export default function RegionPage() {
             { month: "يونيو", value: 7.1 }
           ],
           historicalSalinity: [
-            { month: "يناير", value: 420 },
-            { month: "فبراير", value: 415 },
-            { month: "مارس", value: 410 },
-            { month: "أبريل", value: 405 },
-            { month: "مايو", value: 412 },
-            { month: "يونيو", value: 410 }
+            { month: "يناير", value: 390 },
+            { month: "فبراير", value: 405 },
+            { month: "مارس", value: 415 },
+            { month: "أبريل", value: 425 },
+            { month: "مايو", value: 430 },
+            { month: "يونيو", value: 430 }
           ]
         }
       ]
@@ -180,7 +209,18 @@ export default function RegionPage() {
       pano360Url: "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&w=1600&q=80",
       distanceFromMuscat: "310 كم",
       travelTime: "3 ساعات و 20 دقيقة",
-      weather: { temp: "36° مئوية", condition: "جاف ومستقر", humidity: "30%", wind: "12 كم/س", recommendation: "يفضل الزيارة الصباحية المبكرة لفحص أنظمة الزراعة المائية." },
+      weather: { 
+        temp: "36° مئوية", 
+        condition: "جاف ومستقر", 
+        humidity: "30%", 
+        wind: "12 كم/س", 
+        recommendation: "يفضل الزيارة الصباحية المبكرة لفحص أنظمة الزراعة المائية.",
+        forecast: [
+          { day: "الغد", temp: "37° مئوية", condition: "حار ومشمس" },
+          { day: "بعد الغد", temp: "35° مئوية", condition: "مستقر" },
+          { day: "اليوم الثالث", temp: "36° مئوية", condition: "مشمس" }
+        ]
+      },
       wellsAndIrrigation: [
         { 
           name: "حقل آبار عبري المركزي", 
@@ -189,7 +229,7 @@ export default function RegionPage() {
           flowRate: "350 جالون/دقيقة", 
           status: "مربوط بشبكة التحكم الآلي", 
           ph: "7.3", 
-          salinity: "350 جزء في المليون", 
+          salinity: 350, 
           purity: "عالية النقاء",
           historicalPh: [
             { month: "يناير", value: 7.2 },
@@ -219,7 +259,18 @@ export default function RegionPage() {
       pano360Url: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1600&q=80",
       distanceFromMuscat: "530 كم",
       travelTime: "5 ساعات و 30 دقيقة",
-      weather: { temp: "33° مئوية", condition: "صافي مع رياح ساحلية", humidity: "50%", wind: "18 كم/س", recommendation: "طقس مناسب لتشغيل محطات التحلية الشمسية." },
+      weather: { 
+        temp: "33° مئوية", 
+        condition: "صافي مع رياح ساحلية", 
+        humidity: "50%", 
+        wind: "18 كم/س", 
+        recommendation: "طقس مناسب لتشغيل محطات التحلية الشمسية.",
+        forecast: [
+          { day: "الغد", temp: "34° مئوية", condition: "مشمس ورياح نشطة" },
+          { day: "بعد الغد", temp: "32° مئوية", condition: "معتدل" },
+          { day: "اليوم الثالث", temp: "33° مئوية", condition: "صافي" }
+        ]
+      },
       wellsAndIrrigation: [
         { 
           name: "محطة التحلية الشمسية بالمنطقة الوسطى", 
@@ -228,7 +279,7 @@ export default function RegionPage() {
           flowRate: "600 م³/ساعة", 
           status: "تعمل بالطاقة المتجددة", 
           ph: "7.0", 
-          salinity: "180 جزء في المليون", 
+          salinity: 180, 
           purity: "نقية جداً (معالجة)",
           historicalPh: [
             { month: "يناير", value: 7.0 },
@@ -258,7 +309,18 @@ export default function RegionPage() {
       pano360Url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1600&q=80",
       distanceFromMuscat: "165 كم",
       travelTime: "ساعتان و 15 دقيقة",
-      weather: { temp: "22° مئوية", condition: "بارد ومنعش جبلياً", humidity: "45%", wind: "15 كم/س", recommendation: "أجواء مثالية للاستكشاف والزيارة الميدانية للمدرجات الزراعية." },
+      weather: { 
+        temp: "22° مئوية", 
+        condition: "بارد ومنعش جبلياً", 
+        humidity: "45%", 
+        wind: "15 كم/س", 
+        recommendation: "أجواء مثالية للاستكشاف والزيارة الميدانية للمدرجات الزراعية.",
+        forecast: [
+          { day: "الغد", temp: "21° مئوية", condition: "بارد ومنعش" },
+          { day: "بعد الغد", temp: "23° مئوية", condition: "مشمس جبلياً" },
+          { day: "اليوم الثالث", temp: "22° مئوية", condition: "صافي" }
+        ]
+      },
       wellsAndIrrigation: [
         { 
           name: "فلج الخطمين التراثي المطور", 
@@ -267,7 +329,7 @@ export default function RegionPage() {
           flowRate: "تدفق انسيابي", 
           status: "مجهز بحساسات تدفق رقمية", 
           ph: "7.5", 
-          salinity: "210 جزء في المليون", 
+          salinity: 210, 
           purity: "مياه معدنية طبيعية نقية",
           historicalPh: [
             { month: "يناير", value: 7.4 },
@@ -292,7 +354,7 @@ export default function RegionPage() {
 
   const currentExt = regionExtMap[region.code] || regionExtMap['najd'];
 
-  // مؤشرات أمن غذائي مخصصة لكل منطقة استناداً إلى ملف الـ PDF
+  // مؤشرات أمن غذائي مخصصة لكل منطقة
   const regionalFoodSecurity: Record<string, { selfSufficiency: string; target2040: string; strategicCrops: string[]; waterEfficiency: string }> = {
     najd: { selfSufficiency: "38%", target2040: "80%+", strategicCrops: ["القمح الصلب الاستراتيجي", "اللبان العُماني النقي", "الأعلاف الخضراء المرشدة"], waterEfficiency: "توفير مائي 45% عبر الري المحوري" },
     batinah: { selfSufficiency: "62%", target2040: "90%", strategicCrops: ["الحمضيات المحلية", "الخضروات المحمية الطازجة", "المانجو العُماني"], waterEfficiency: "استخدام مياه معالجة ثلاثياً وحصاد سدود" },
@@ -341,6 +403,11 @@ export default function RegionPage() {
     const refCode = "OMN-TOUR-" + Math.floor(100000 + Math.random() * 900000);
     setBookingReference(refCode);
     setShowSuccessModal(true);
+  };
+
+  // محاكاة تصدير تقرير جودة المياه كملف PDF أو صورة
+  const handleExportChart = (format: 'pdf' | 'image', wellName: string) => {
+    alert(`تم تجهيز تقرير جودة المياه والرسوم البيانية للبئر (${wellName}) بصيغة (${format.toUpperCase()}) بنجاح، وجاري بدء التحميل.`);
   };
 
   return (
@@ -395,7 +462,7 @@ export default function RegionPage() {
               onClick={() => setActiveTab("weather")}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${activeTab === "weather" ? "bg-falaj text-white shadow-md" : "bg-paper text-ink hover:bg-falaj/10"}`}
             >
-              <CloudSun size={14} /> الطقس المباشر والتخطيط
+              <CloudSun size={14} /> الطقس وتوقعات 3 أيام
             </button>
             <button 
               onClick={() => setActiveTab("pano360")}
@@ -407,7 +474,7 @@ export default function RegionPage() {
               onClick={() => setActiveTab("wells")}
               className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 ${activeTab === "wells" ? "bg-falaj text-white shadow-md" : "bg-paper text-ink hover:bg-falaj/10"}`}
             >
-              <FlaskConical size={14} /> الآبار والرسوم التاريخية للمياه
+              <FlaskConical size={14} /> الآبار وتصدير الرسوم
             </button>
             <button 
               onClick={() => setActiveTab("tour")}
@@ -454,13 +521,13 @@ export default function RegionPage() {
             </div>
           )}
 
-          {/* تبويب حالة الطقس المباشرة */}
+          {/* تبويب حالة الطقس المباشرة مع توقعات 3 أيام */}
           {activeTab === "weather" && (
             <div className="mb-8 space-y-6">
               <div className="bg-gradient-to-br from-falaj-soft to-white p-6 rounded-2xl border border-falaj/20 shadow-sm">
                 <div className="flex items-center gap-3 mb-4 text-falaj">
                   <CloudSun size={28} />
-                  <h3 className="text-xl font-bold font-kufi">حالة الطقس المباشرة والتوصيات الميدانية لزيارة {region.name}</h3>
+                  <h3 className="text-xl font-bold font-kufi">حالة الطقس المباشرة وتوقعات الأيام الثلاثة القادمة لزيارة {region.name}</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-white p-4 rounded-xl border border-line text-center">
@@ -480,6 +547,25 @@ export default function RegionPage() {
                     <strong className="text-xs text-ink font-bold">{currentExt.weather.wind}</strong>
                   </div>
                 </div>
+
+                {/* توقعات الأيام الثلاثة القادمة */}
+                <div className="mb-6">
+                  <h4 className="font-bold text-sm text-falaj-deep font-kufi mb-3 flex items-center gap-1.5">
+                    <Calendar size={16} className="text-falaj" /> توقعات الطقس للأيام الثلاثة القادمة للتخطيط المسبق للزيارة
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {currentExt.weather.forecast.map((f, i) => (
+                      <div key={i} className="bg-white p-4 rounded-xl border border-line flex items-center justify-between">
+                        <div>
+                          <strong className="text-falaj-deep text-xs block">{f.day}</strong>
+                          <span className="text-[11px] text-muted">{f.condition}</span>
+                        </div>
+                        <span className="text-base font-bold font-mono text-falaj bg-falaj/10 px-3 py-1 rounded-lg">{f.temp}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="bg-white p-5 rounded-xl border border-line flex items-start gap-3">
                   <Wind size={20} className="text-copper mt-1 shrink-0" />
                   <div>
@@ -508,76 +594,110 @@ export default function RegionPage() {
             </div>
           )}
 
-          {/* تبويب الآبار والرسوم التاريخية لجودة المياه */}
+          {/* تبويب الآبار والرسوم التاريخية مع التنبيهات المرئية وزر التصدير */}
           {activeTab === "wells" && (
             <div className="mb-8 space-y-6">
-              <h3 className="text-lg font-bold text-falaj-deep font-kufi flex items-center gap-2">
-                <FlaskConical size={20} className="text-falaj" /> الآبار ومحطات الري والرسوم البيانية التاريخية لتغيرات الجودة (آخر 6 أشهر)
-              </h3>
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <h3 className="text-lg font-bold text-falaj-deep font-kufi flex items-center gap-2">
+                  <FlaskConical size={20} className="text-falaj" /> الآبار ومحطات الري - الرسوم التاريخية وتنبيهات الملوحة الآمنة
+                </h3>
+              </div>
               
-              {currentExt.wellsAndIrrigation.map((well, i) => (
-                <div key={i} className="bg-paper p-6 rounded-2xl border border-line space-y-4">
-                  <div className="flex justify-between items-center flex-wrap gap-2">
-                    <div>
-                      <strong className="text-falaj-deep text-base font-kufi">{well.name}</strong>
-                      <p className="text-xs text-muted mt-0.5">النوع: {well.type} | العمق: {well.depth} | معدل التدفق: {well.flowRate}</p>
-                    </div>
-                    <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">{well.status}</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                    <div className="bg-white p-3 rounded-xl border border-line">
-                      <span className="text-muted block mb-1">درجة الحموضة الحالية (pH):</span>
-                      <strong className="text-falaj font-mono text-sm">{well.ph}</strong>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-line">
-                      <span className="text-muted block mb-1">مستوى الملوحة (TDS):</span>
-                      <strong className="text-copper font-mono text-sm">{well.salinity}</strong>
-                    </div>
-                    <div className="bg-white p-3 rounded-xl border border-line">
-                      <span className="text-muted block mb-1">شهادة النقاء المخبرية:</span>
-                      <strong className="text-green-700 font-bold">{well.purity}</strong>
-                    </div>
-                  </div>
-
-                  {/* الرسوم البيانية التاريخية المبسطة للتغيرات (pH والملوحة) */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="bg-white p-4 rounded-xl border border-line">
-                      <h5 className="font-bold text-xs text-falaj-deep mb-3 flex items-center gap-1.5">
-                        <Droplets size={14} className="text-falaj" /> التطور التاريخي لدرجة الحموضة (pH)
-                      </h5>
-                      <div className="space-y-2">
-                        {well.historicalPh.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-[11px]">
-                            <span className="w-12 text-muted">{item.month}</span>
-                            <div className="flex-1 bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                              <div className="bg-falaj h-full rounded-full" style={{ width: `${(item.value / 10) * 100}%` }}></div>
-                            </div>
-                            <span className="w-8 font-mono font-bold text-falaj">{item.value}</span>
-                          </div>
-                        ))}
+              {currentExt.wellsAndIrrigation.map((well, i) => {
+                const isSalinityExceeded = well.salinity > 400; // الحد الآمن للاستزراع الحساس 400 جزء في المليون
+                return (
+                  <div key={i} className={`p-6 rounded-2xl border transition-all space-y-4 ${isSalinityExceeded ? 'bg-amber-50/60 border-amber-300' : 'bg-paper border-line'}`}>
+                    <div className="flex justify-between items-center flex-wrap gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <strong className="text-falaj-deep text-base font-kufi">{well.name}</strong>
+                          {isSalinityExceeded && (
+                            <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-amber-300">
+                              <AlertTriangle size={12} className="text-amber-600" /> تنبيه: ملوحة أعلى من الحد الآمن (400)
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted mt-0.5">النوع: {well.type} | العمق: {well.depth} | معدل التدفق: {well.flowRate}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">{well.status}</span>
+                        <button 
+                          onClick={() => handleExportChart('pdf', well.name)}
+                          className="bg-falaj hover:bg-falaj-deep text-white px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 shadow-sm transition-all"
+                        >
+                          <Download size={13} /> تصدير PDF
+                        </button>
+                        <button 
+                          onClick={() => handleExportChart('image', well.name)}
+                          className="bg-copper hover:bg-amber-800 text-white px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 shadow-sm transition-all"
+                        >
+                          <Download size={13} /> تصدير صورة
+                        </button>
                       </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl border border-line">
-                      <h5 className="font-bold text-xs text-falaj-deep mb-3 flex items-center gap-1.5">
-                        <FlaskConical size={14} className="text-copper" /> التطور التاريخي للملوحة (TDS - جزء في المليون)
-                      </h5>
-                      <div className="space-y-2">
-                        {well.historicalSalinity.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-[11px]">
-                            <span className="w-12 text-muted">{item.month}</span>
-                            <div className="flex-1 bg-gray-100 h-2.5 rounded-full overflow-hidden">
-                              <div className="bg-copper h-full rounded-full" style={{ width: `${(item.value / 600) * 100}%` }}></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <div className="bg-white p-3 rounded-xl border border-line">
+                        <span className="text-muted block mb-1">درجة الحموضة الحالية (pH):</span>
+                        <strong className="text-falaj font-mono text-sm">{well.ph}</strong>
+                      </div>
+                      <div className={`p-3 rounded-xl border ${isSalinityExceeded ? 'bg-amber-100/60 border-amber-300' : 'bg-white border-line'}`}>
+                        <span className="text-muted block mb-1">مستوى الملوحة (TDS):</span>
+                        <strong className={`font-mono text-sm ${isSalinityExceeded ? 'text-amber-800 font-bold' : 'text-copper'}`}>{well.salinity} جزء في المليون</strong>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-line">
+                        <span className="text-muted block mb-1">شهادة النقاء المخبرية:</span>
+                        <strong className="text-green-700 font-bold">{well.purity}</strong>
+                      </div>
+                    </div>
+
+                    {/* الرسوم البيانية التاريخية للتغيرات مع التنبيه المرئي عند التجاوز */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                      <div className="bg-white p-4 rounded-xl border border-line">
+                        <h5 className="font-bold text-xs text-falaj-deep mb-3 flex items-center gap-1.5">
+                          <Droplets size={14} className="text-falaj" /> التطور التاريخي لدرجة الحموضة (pH)
+                        </h5>
+                        <div className="space-y-2">
+                          {well.historicalPh.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-[11px]">
+                              <span className="w-12 text-muted">{item.month}</span>
+                              <div className="flex-1 bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                                <div className="bg-falaj h-full rounded-full" style={{ width: `${(item.value / 10) * 100}%` }}></div>
+                              </div>
+                              <span className="w-8 font-mono font-bold text-falaj">{item.value}</span>
                             </div>
-                            <span className="w-10 font-mono font-bold text-copper">{item.value}</span>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-4 rounded-xl border border-line">
+                        <h5 className="font-bold text-xs text-falaj-deep mb-3 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <FlaskConical size={14} className={isSalinityExceeded ? 'text-amber-600' : 'text-copper'} /> التطور التاريخي للملوحة (TDS)
+                          </span>
+                          {isSalinityExceeded && (
+                            <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-0.5 rounded">تحذير تجاوز الحد</span>
+                          )}
+                        </h5>
+                        <div className="space-y-2">
+                          {well.historicalSalinity.map((item, idx) => {
+                            const isHigh = item.value > 400;
+                            return (
+                              <div key={idx} className="flex items-center gap-2 text-[11px]">
+                                <span className="w-12 text-muted">{item.month}</span>
+                                <div className="flex-1 bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all ${isHigh ? 'bg-amber-500' : 'bg-copper'}`} style={{ width: `${(item.value / 600) * 100}%` }}></div>
+                                </div>
+                                <span className={`w-10 font-mono font-bold ${isHigh ? 'text-amber-700' : 'text-copper'}`}>{item.value}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
