@@ -146,8 +146,25 @@ export const mvpDocumentVersions = mysqlTable("mvp_document_versions", {
   changeSummary: text("changeSummary").notNull(),
   accessLevel: mysqlEnum("accessLevel", ["investor", "admin"]).default("investor").notNull(),
   createdByOpenId: varchar("createdByOpenId", { length: 64 }),
+  publicationState: mysqlEnum("publicationState", ["draft", "approved"]).default("approved").notNull(),
+  approvedByOpenId: varchar("approvedByOpenId", { length: 64 }),
+  approvedAt: timestamp("approvedAt"),
+  approvalNote: text("approvalNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type MvpDocumentVersion = typeof mvpDocumentVersions.$inferSelect;
 export type InsertMvpDocumentVersion = typeof mvpDocumentVersions.$inferInsert;
+
+export const roadmapProgressAudits = mysqlTable("roadmap_progress_audits", {
+  id: int("id").autoincrement().primaryKey(),
+  milestoneCode: varchar("milestoneCode", { length: 64 }).notNull(),
+  previousProgressPercent: int("previousProgressPercent").notNull(),
+  nextProgressPercent: int("nextProgressPercent").notNull(),
+  reason: text("reason").notNull(),
+  changedByOpenId: varchar("changedByOpenId", { length: 64 }).notNull(),
+  changedByName: varchar("changedByName", { length: 255 }),
+  changedAt: timestamp("changedAt").defaultNow().notNull(),
+});
+
+export type RoadmapProgressAudit = typeof roadmapProgressAudits.$inferSelect;

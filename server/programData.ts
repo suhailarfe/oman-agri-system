@@ -1,7 +1,9 @@
 import { asc, desc, eq } from "drizzle-orm";
-import { mvpDocumentVersions, roadmapMilestones } from "../drizzle/schema";
+import { mvpDocumentVersions, roadmapMilestones, roadmapProgressAudits } from "../drizzle/schema";
 import { getDb } from "./db";
 import { createRoleAwareExport } from "./documentAccess";
+import { buildRoadmapProgressAudit } from "./roadmapAudit";
+import { buildVersionApproval } from "./versionApproval";
 
 const roadmapSeed = [
   {
@@ -141,14 +143,51 @@ export async function listRoadmapMilestones() {
     .orderBy(asc(roadmapMilestones.sortOrder));
 }
 
-export async function setRoadmapProgress(code: string, progressPercent: number) {
+export async function setRoadmapProgress(
+  code: string,
+  progressPercent: number,
+  reason: string,
+  actor: { openId: string; name: string | null }
+) {
   const db = await requireDb();
+  const rows = await db.select().from(roadmapMilestones).where(eq(roadmapMilestones.code, code)).limit(1);
+  const current = rows[0];
+  if (!current) throw new Error("المرحلة المطلوب تحديثها غير موجودة.");
+
   await db
     .update(roadmapMilestones)
     .set({ progressPercent })
     .where(eq(roadmapMilestones.code, code));
 
+  await db.insert(roadmapProgressAudits).values(buildRoadmapProgressAudit({
+    milestoneCode: code,
+    previousProgressPercent: current.progressPercent,
+    nextProgressPercent: progressPercent,
+    reason,
+    changedByOpenId: actor.openId,
+    changedByName: actor.name,
+  }));
+
   return listRoadmapMilestones();
+}
+
+export async function listRoadmapProgressAudits() {
+  const db = await requireDb();
+  return db
+    .select({
+      id: roadmapProgressAudits.id,
+      milestoneCode: roadmapProgressAudits.milestoneCode,
+      milestoneTitle: roadmapMilestones.title,
+      previousProgressPercent: roadmapProgressAudits.previousProgressPercent,
+      nextProgressPercent: roadmapProgressAudits.nextProgressPercent,
+      reason: roadmapProgressAudits.reason,
+      changedByName: roadmapProgressAudits.changedByName,
+      changedAt: roadmapProgressAudits.changedAt,
+    })
+    .from(roadmapProgressAudits)
+    .innerJoin(roadmapMilestones, eq(roadmapProgressAudits.milestoneCode, roadmapMilestones.code))
+    .orderBy(desc(roadmapProgressAudits.changedAt))
+    .limit(20);
 }
 
 export async function listCurrentDocuments(role: "admin" | "user") {
@@ -158,7 +197,7 @@ export async function listCurrentDocuments(role: "admin" | "user") {
   const latestByDocument = new Map<string, (typeof rows)[number]>();
 
   for (const row of rows) {
-    if (role !== "admin" && row.accessLevel !== "investor") continue;
+    if (role !== "admin" && (row.accessLevel !== "investor" || row.publicationState !== "approved")) continue;
     if (!latestByDocument.has(row.documentKey)) latestByDocument.set(row.documentKey, row);
   }
 
@@ -181,9 +220,49 @@ export async function getDocumentVersion(id: number) {
   return rows[0];
 }
 
+export async function createDocumentDraft(input: {
+  documentKey: string;
+  versionTag: string;
+  title: string;
+  category: string;
+  summary: string;
+  content: string;
+  changeSummary: string;
+  createdByOpenId: string;
+}) {
+  const db = await requireDb();
+  await db.insert(mvpDocumentVersions).values({
+    ...input,
+    status: "مسودة بانتظار الاعتماد",
+    accessLevel: "admin",
+    publicationState: "draft",
+  });
+  return listDocumentHistory(input.documentKey);
+}
+
+export async function approveDocumentVersion(input: {
+  id: number;
+  releaseToInvestors: boolean;
+  approvalNote: string;
+  approvedByOpenId: string;
+}) {
+  const db = await requireDb();
+  const version = await getDocumentVersion(input.id);
+  if (!version) throw new Error("نسخة الوثيقة المطلوب اعتمادها غير موجودة.");
+
+  await db
+    .update(mvpDocumentVersions)
+    .set(buildVersionApproval(input.releaseToInvestors, input.approvalNote, input.approvedByOpenId))
+    .where(eq(mvpDocumentVersions.id, input.id));
+
+  return listDocumentHistory(version.documentKey);
+}
+
 export async function getExportDocument(documentKey: string, role: "admin" | "user") {
   const history = await listDocumentHistory(documentKey);
-  const investorVersion = history.find((version) => version.accessLevel === "investor");
+  const investorVersion = history.find(
+    (version) => version.accessLevel === "investor" && version.publicationState === "approved"
+  );
   const selected = role === "admin" ? history[0] ?? investorVersion : investorVersion;
 
   if (!selected) throw new Error("لا توجد نسخة متاحة للتنزيل لهذا الدور.");

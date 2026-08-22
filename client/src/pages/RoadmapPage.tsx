@@ -1,6 +1,6 @@
-/* صفحة خارطة الطريق: تعرض مراحل قاعدة البيانات وتتيح تعديل تقدمها للمشرفين. */
+/* صفحة خارطة الطريق: تعرض مراحل قاعدة البيانات وسجل تدقيق تحديثاتها للمشرفين. */
 import { useState } from "react";
-import { ArrowRight, Calendar, Clock, LoaderCircle, Save, TrendingUp } from "lucide-react";
+import { ArrowRight, Calendar, ClipboardList, Clock, LoaderCircle, Save, TrendingUp } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 
@@ -20,20 +20,31 @@ const statusClasses: Record<string, string> = {
 
 export default function RoadmapPage() {
   const [draftProgress, setDraftProgress] = useState<Record<string, number>>({});
+  const [draftReasons, setDraftReasons] = useState<Record<string, string>>({});
+  const [updateMessage, setUpdateMessage] = useState("");
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const utils = trpc.useUtils();
   const milestonesQuery = trpc.program.roadmap.list.useQuery();
+  const auditQuery = trpc.program.roadmap.auditHistory.useQuery(undefined, { enabled: isAdmin });
   const updateProgress = trpc.program.roadmap.updateProgress.useMutation({
     onSuccess: async () => {
-      await utils.program.roadmap.list.invalidate();
+      await Promise.all([utils.program.roadmap.list.invalidate(), utils.program.roadmap.auditHistory.invalidate()]);
       setDraftProgress({});
+      setDraftReasons({});
+      setUpdateMessage("تم حفظ نسبة الإنجاز وإضافة سجل تدقيق باسم المشرف.");
     },
+    onError: () => setUpdateMessage("تعذر حفظ التحديث. تحقق من النسبة وسبب التعديل."),
   });
 
   const saveProgress = (code: string, defaultValue: number) => {
+    const reason = draftReasons[code]?.trim() ?? "";
+    if (reason.length < 4) {
+      setUpdateMessage("اكتب سبباً واضحاً من أربعة أحرف على الأقل قبل الحفظ.");
+      return;
+    }
     const progressPercent = draftProgress[code] ?? defaultValue;
-    updateProgress.mutate({ code, progressPercent: Math.max(0, Math.min(100, progressPercent)) });
+    updateProgress.mutate({ code, progressPercent: Math.max(0, Math.min(100, progressPercent)), reason });
   };
 
   return (
@@ -47,7 +58,7 @@ export default function RoadmapPage() {
         <section className="mb-12 rounded-3xl border border-line bg-white p-8 text-center md:p-12">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-falaj/20 bg-falaj/10 px-4 py-1.5 text-xs font-bold text-falaj"><TrendingUp size={14} /> المسار الزمني الاستراتيجي للمنصة</div>
           <h1 className="mb-4 font-kufi text-3xl font-extrabold text-falaj-deep md:text-5xl">خارطة طريق واحات ومزارع عُمان 2040</h1>
-          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-muted md:text-base">تُقرأ نسب الإنجاز وتواريخ تحديثها مباشرة من قاعدة البيانات. يستطيع المشرف تعديل النسب المعتمدة، بينما يطالع المستثمر حالة التنفيذ الحالية.</p>
+          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-muted md:text-base">تُقرأ النسب وتواريخها من قاعدة البيانات. يحفظ كل تعديل إداري النسبة السابقة واللاحقة وسبب التغيير واسم منفذه في سجل تدقيق مستقل.</p>
         </section>
 
         {milestonesQuery.isLoading && <div className="rounded-3xl border border-line bg-white p-10 text-center text-sm text-muted">يجري تحميل مراحل خارطة الطريق من قاعدة البيانات.</div>}
@@ -66,13 +77,16 @@ export default function RoadmapPage() {
                     <div className="mb-2 flex items-center justify-between gap-4 text-xs"><span className="font-bold text-falaj-deep">نسبة الإنجاز الحالية</span><span className="font-mono font-bold text-falaj">{currentProgress}%</span></div>
                     <div className="h-2.5 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-label={`نسبة إنجاز ${item.title}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={currentProgress}><div className="h-full rounded-full bg-falaj transition-[width] duration-150 ease-out" style={{ width: `${currentProgress}%` }} /></div>
                     <p className="mt-2 text-[11px] text-muted">آخر تحديث: {new Date(item.updatedAt).toLocaleDateString("ar-OM")}</p>
-                    {isAdmin && <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-line pt-3"><label className="text-xs font-bold text-falaj-deep" htmlFor={`progress-${item.code}`}>تحديث النسبة</label><input id={`progress-${item.code}`} type="number" min="0" max="100" value={currentProgress} onChange={(event) => setDraftProgress((previous) => ({ ...previous, [item.code]: Number(event.target.value) }))} className="h-9 w-20 rounded-lg border border-line bg-white px-2 text-xs text-ink outline-none focus:border-falaj" /><button type="button" onClick={() => saveProgress(item.code, item.progressPercent)} disabled={updateProgress.isPending} className="inline-flex h-9 items-center gap-1 rounded-lg bg-falaj px-3 text-xs font-bold text-white transition-colors hover:bg-falaj-deep disabled:opacity-70"><Save size={13} /> حفظ</button>{updateProgress.isPending && <LoaderCircle size={15} className="animate-spin text-falaj" />}</div>}
+                    {isAdmin && <div className="mt-4 grid gap-3 border-t border-line pt-3 md:grid-cols-[auto_1fr_auto]"><label className="grid gap-1 text-xs font-bold text-falaj-deep" htmlFor={`progress-${item.code}`}>النسبة<input id={`progress-${item.code}`} type="number" min="0" max="100" value={currentProgress} onChange={(event) => setDraftProgress((previous) => ({ ...previous, [item.code]: Number(event.target.value) }))} className="h-9 w-24 rounded-lg border border-line bg-white px-2 text-xs text-ink outline-none focus:border-falaj" /></label><label className="grid gap-1 text-xs font-bold text-falaj-deep" htmlFor={`reason-${item.code}`}>سبب التعديل<input id={`reason-${item.code}`} type="text" value={draftReasons[item.code] ?? ""} onChange={(event) => setDraftReasons((previous) => ({ ...previous, [item.code]: event.target.value }))} placeholder="مثال: اعتماد إنجاز ربط نظام المياه" className="h-9 w-full rounded-lg border border-line bg-white px-3 text-xs text-ink outline-none focus:border-falaj" /></label><button type="button" onClick={() => saveProgress(item.code, item.progressPercent)} disabled={updateProgress.isPending} className="mt-auto inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-falaj px-3 text-xs font-bold text-white transition-colors hover:bg-falaj-deep disabled:opacity-70"><Save size={13} /> حفظ</button></div>}
                   </div>
                 </div>
               </article>
             );
           })}
         </section>
+        {updateMessage && <p role="status" className="mt-5 text-xs font-bold text-falaj">{updateProgress.isPending && <LoaderCircle size={14} className="ml-1 inline animate-spin" />}{updateMessage}</p>}
+
+        {isAdmin && <section className="mt-10 rounded-3xl border border-line bg-white p-6 md:p-8"><div className="mb-5 flex items-center gap-2 text-falaj"><ClipboardList size={20} /><h2 className="font-kufi text-xl font-bold">سجل تدقيق تقدم المراحل</h2></div>{auditQuery.isLoading && <p className="text-sm text-muted">يجري تحميل السجل.</p>}{auditQuery.data?.length === 0 && <p className="rounded-xl border border-line bg-paper p-4 text-xs text-muted">لا توجد تعديلات مسجلة بعد.</p>}<div className="space-y-3">{auditQuery.data?.map((entry) => <article key={entry.id} className="rounded-xl border border-line bg-paper p-4"><div className="mb-2 flex flex-wrap items-center justify-between gap-2"><strong className="text-sm text-falaj-deep">{entry.milestoneTitle}</strong><span className="font-mono text-xs font-bold text-falaj">{entry.previousProgressPercent}% ← {entry.nextProgressPercent}%</span></div><p className="text-xs leading-relaxed text-ink">السبب: {entry.reason}</p><p className="mt-2 text-[11px] text-muted">بواسطة {entry.changedByName || "مشرف معتمد"} في {new Date(entry.changedAt).toLocaleString("ar-OM")}</p></article>)}</div></section>}
       </main>
     </div>
   );
