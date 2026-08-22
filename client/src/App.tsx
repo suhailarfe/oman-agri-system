@@ -14,6 +14,7 @@ import SystemArchitecturePage from "./pages/SystemArchitecturePage";
 import FinancialFeasibilityPage from "./pages/FinancialFeasibilityPage";
 import AdminDocsPage from "./pages/AdminDocsPage";
 import RoadmapPage from "./pages/RoadmapPage";
+import NotificationSettingsPage from "./pages/NotificationSettingsPage";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path={"/feasibility"} component={FinancialFeasibilityPage} />
       <Route path={"/admin/docs"} component={AdminDocsPage} />
       <Route path={"/roadmap"} component={RoadmapPage} />
+      <Route path={"/settings/notifications"} component={NotificationSettingsPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

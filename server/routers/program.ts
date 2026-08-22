@@ -2,15 +2,21 @@ import { z } from "zod";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import {
   approveDocumentVersion,
+  createSavedAuditFilter,
   createDocumentDraft,
+  deleteSavedAuditFilter,
   getDocumentVersion,
   getExportDocument,
+  getNotificationPreferences,
   listAppNotifications,
   listCurrentDocuments,
   listDocumentHistory,
   listRoadmapMilestones,
   listRoadmapProgressAudits,
+  listSavedAuditFilters,
+  markAllAppNotificationsRead,
   markAppNotificationRead,
+  saveNotificationPreferences,
   setRoadmapProgress,
 } from "../programData";
 import { compareDocumentText } from "../documentDiff";
@@ -24,6 +30,15 @@ export const programRouter = router({
     updateProgress: adminProcedure
       .input(z.object({ code: z.string().min(1), progressPercent: z.number().int().min(0).max(100), reason: z.string().trim().min(4).max(500) }))
       .mutation(({ ctx, input }) => setRoadmapProgress(input.code, input.progressPercent, input.reason, ctx.user)),
+    savedFilters: router({
+      list: adminProcedure.query(({ ctx }) => listSavedAuditFilters(ctx.user.openId)),
+      create: adminProcedure
+        .input(z.object({ name: z.string().trim().min(2).max(96), query: z.string().trim().max(160).optional(), fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }))
+        .mutation(({ ctx, input }) => createSavedAuditFilter({ ...input, userOpenId: ctx.user.openId })),
+      delete: adminProcedure
+        .input(z.object({ id: z.number().int().positive() }))
+        .mutation(({ ctx, input }) => deleteSavedAuditFilter(input.id, ctx.user.openId)),
+    }),
   }),
   documents: router({
     list: protectedProcedure.query(({ ctx }) => listCurrentDocuments(ctx.user.role)),
@@ -72,5 +87,10 @@ export const programRouter = router({
     markRead: protectedProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ ctx, input }) => markAppNotificationRead(input.id, ctx.user.openId)),
+    markAllRead: protectedProcedure.mutation(({ ctx }) => markAllAppNotificationsRead(ctx.user.openId)),
+    preferences: protectedProcedure.query(({ ctx }) => getNotificationPreferences(ctx.user.openId)),
+    updatePreferences: protectedProcedure
+      .input(z.object({ draftNotificationsEnabled: z.boolean(), publishedNotificationsEnabled: z.boolean() }))
+      .mutation(({ ctx, input }) => saveNotificationPreferences({ ...input, userOpenId: ctx.user.openId })),
   }),
 });

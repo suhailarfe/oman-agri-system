@@ -1,4 +1,4 @@
-import { Bell, CheckCheck, FileCheck2, FileClock } from "lucide-react";
+import { Bell, CheckCheck, FileCheck2, FileClock, Settings2 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 
@@ -9,6 +9,9 @@ export function NotificationCenter() {
   const markRead = trpc.program.notifications.markRead.useMutation({
     onSuccess: async () => utils.program.notifications.list.invalidate(),
   });
+  const markAllRead = trpc.program.notifications.markAllRead.useMutation({
+    onSuccess: async () => utils.program.notifications.list.invalidate(),
+  });
   const notifications = notificationsQuery.data ?? [];
   const unreadCount = notifications.filter((notification) => notification.isRead === 0).length;
 
@@ -16,11 +19,12 @@ export function NotificationCenter() {
 
   return (
     <details className="relative">
-      <summary className="flex h-9 cursor-pointer list-none items-center gap-2 rounded-lg border border-line bg-white px-3 text-xs font-bold text-falaj outline-none focus-visible:border-falaj">
-        <Bell size={15} /> الإشعارات {unreadCount > 0 && <span className="font-mono text-[11px]">{unreadCount}</span>}
+      <summary className="relative flex h-9 cursor-pointer list-none items-center gap-2 rounded-lg border border-line bg-white px-3 text-xs font-bold text-falaj outline-none focus-visible:border-falaj">
+        <Bell size={15} /> الإشعارات
+        {unreadCount > 0 && <span aria-label={`${unreadCount} إشعارات غير مقروءة`} className="grid h-4 min-w-4 place-items-center rounded-full bg-falaj px-1 font-mono text-[10px] text-white">{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </summary>
       <div className="absolute left-0 z-20 mt-2 w-80 rounded-xl border border-line bg-white p-3 shadow-[0_1px_2px_rgba(0,0,0,.06)]">
-        <div className="mb-2 flex items-center justify-between"><strong className="text-xs text-falaj-deep">تنبيهات الحساب</strong><span className="text-[11px] text-muted">{user.role === "admin" ? "مشرف" : "مستثمر"}</span></div>
+        <div className="mb-2 flex items-center justify-between gap-2"><strong className="text-xs text-falaj-deep">تنبيهات الحساب</strong><div className="flex items-center gap-2"><a href="/settings/notifications" className="grid h-7 w-7 place-items-center rounded-lg border border-line text-falaj hover:bg-falaj-soft" aria-label="إعدادات الإشعارات"><Settings2 size={14} /></a>{unreadCount > 0 && <button type="button" onClick={() => markAllRead.mutate()} disabled={markAllRead.isPending} className="h-7 rounded-lg border border-line px-2 text-[10px] font-bold text-falaj hover:bg-falaj-soft disabled:opacity-50">تحديد الكل كمقروء</button>}</div></div>
         {notificationsQuery.isLoading && <p className="p-3 text-xs text-muted">يجري تحميل الإشعارات.</p>}
         {!notificationsQuery.isLoading && notifications.length === 0 && <p className="rounded-lg border border-line bg-paper p-3 text-xs text-muted">لا توجد إشعارات جديدة.</p>}
         <div className="max-h-80 space-y-2 overflow-y-auto">{notifications.map((notification) => <button key={notification.id} type="button" onClick={() => notification.isRead === 0 && markRead.mutate({ id: notification.id })} className={`w-full rounded-lg border p-3 text-right transition-colors ${notification.isRead === 0 ? "border-falaj/30 bg-falaj-soft hover:bg-paper" : "border-line bg-white hover:bg-paper"}`}><div className="mb-1 flex items-center gap-2 text-xs font-bold text-falaj-deep">{notification.type === "draft" ? <FileClock size={14} /> : <FileCheck2 size={14} />}{notification.title}{notification.isRead === 1 && <CheckCheck size={13} className="mr-auto text-muted" />}</div><p className="text-[11px] leading-relaxed text-muted">{notification.content}</p><p className="mt-1 text-[10px] text-muted">{new Date(notification.createdAt).toLocaleString("ar-OM")}</p></button>)}</div>

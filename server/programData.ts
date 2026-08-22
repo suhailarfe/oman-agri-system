@@ -1,5 +1,5 @@
-import { asc, desc, eq } from "drizzle-orm";
-import { appNotifications, mvpDocumentVersions, roadmapMilestones, roadmapProgressAudits, users } from "../drizzle/schema";
+import { asc, desc, eq, inArray } from "drizzle-orm";
+import { appNotifications, mvpDocumentVersions, notificationPreferences, roadmapMilestones, roadmapProgressAudits, savedAuditFilters, users } from "../drizzle/schema";
 import { getDb } from "./db";
 import { createRoleAwareExport } from "./documentAccess";
 import { buildRoadmapProgressAudit } from "./roadmapAudit";
@@ -213,7 +213,35 @@ async function createRoleNotification(input: {
     .from(users)
     .where(eq(users.role, input.recipientRole));
   if (recipients.length === 0) return;
-  await db.insert(appNotifications).values(recipients.map((recipient) => ({ ...input, recipientOpenId: recipient.openId })));
+  const preferences = await db
+    .select()
+    .from(notificationPreferences)
+    .where(inArray(notificationPreferences.userOpenId, recipients.map((recipient) => recipient.openId)));
+  const preferencesByUser = new Map(preferences.map((preference) => [preference.userOpenId, preference]));
+  const eligibleRecipients = recipients.filter((recipient) => {
+    const preference = preferencesByUser.get(recipient.openId);
+    if (!preference) return true;
+    if (input.type === "draft") return preference.draftNotificationsEnabled === 1;
+    if (input.type === "published") return preference.publishedNotificationsEnabled === 1;
+    return true;
+  });
+  if (eligibleRecipients.length === 0) return;
+  await db.insert(appNotifications).values(eligibleRecipients.map((recipient) => ({ ...input, recipientOpenId: recipient.openId })));
+}
+
+export async function getNotificationPreferences(userOpenId: string) {
+  const db = await requireDb();
+  const rows = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userOpenId, userOpenId)).limit(1);
+  return rows[0] ?? { userOpenId, draftNotificationsEnabled: 1, publishedNotificationsEnabled: 1 };
+}
+
+export async function saveNotificationPreferences(input: { userOpenId: string; draftNotificationsEnabled: boolean; publishedNotificationsEnabled: boolean }) {
+  const db = await requireDb();
+  await db
+    .insert(notificationPreferences)
+    .values({ userOpenId: input.userOpenId, draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0 })
+    .onDuplicateKeyUpdate({ set: { draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0 } });
+  return getNotificationPreferences(input.userOpenId);
 }
 
 export async function listAppNotifications(openId: string) {
@@ -233,6 +261,31 @@ export async function markAppNotificationRead(id: number, openId: string) {
   if (!notification || notification.recipientOpenId !== openId) throw new Error("الإشعار المطلوب غير متاح لهذا الحساب.");
   await db.update(appNotifications).set({ isRead: 1 }).where(eq(appNotifications.id, id));
   return { id, isRead: true };
+}
+
+export async function markAllAppNotificationsRead(openId: string) {
+  const db = await requireDb();
+  await db.update(appNotifications).set({ isRead: 1 }).where(eq(appNotifications.recipientOpenId, openId));
+  return { success: true };
+}
+
+export async function listSavedAuditFilters(userOpenId: string) {
+  const db = await requireDb();
+  return db.select().from(savedAuditFilters).where(eq(savedAuditFilters.userOpenId, userOpenId)).orderBy(desc(savedAuditFilters.createdAt));
+}
+
+export async function createSavedAuditFilter(input: { userOpenId: string; name: string; query?: string; fromDate?: string; toDate?: string }) {
+  const db = await requireDb();
+  await db.insert(savedAuditFilters).values(input);
+  return listSavedAuditFilters(input.userOpenId);
+}
+
+export async function deleteSavedAuditFilter(id: number, userOpenId: string) {
+  const db = await requireDb();
+  const rows = await db.select().from(savedAuditFilters).where(eq(savedAuditFilters.id, id)).limit(1);
+  if (!rows[0] || rows[0].userOpenId !== userOpenId) throw new Error("الفِلتر المطلوب غير متاح لهذا الحساب.");
+  await db.delete(savedAuditFilters).where(eq(savedAuditFilters.id, id));
+  return listSavedAuditFilters(userOpenId);
 }
 
 export async function listCurrentDocuments(role: "admin" | "user") {

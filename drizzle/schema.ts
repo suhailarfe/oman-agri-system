@@ -182,3 +182,25 @@ export const appNotifications = mysqlTable("app_notifications", {
 });
 
 export type AppNotification = typeof appNotifications.$inferSelect;
+
+export const notificationPreferences = mysqlTable("notification_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userOpenId: varchar("userOpenId", { length: 64 }).notNull().unique(),
+  draftNotificationsEnabled: int("draftNotificationsEnabled").default(1).notNull(),
+  publishedNotificationsEnabled: int("publishedNotificationsEnabled").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+
+export const savedAuditFilters = mysqlTable("saved_audit_filters", {
+  id: int("id").autoincrement().primaryKey(),
+  userOpenId: varchar("userOpenId", { length: 64 }).notNull(),
+  name: varchar("name", { length: 96 }).notNull(),
+  query: varchar("query", { length: 160 }),
+  fromDate: varchar("fromDate", { length: 10 }),
+  toDate: varchar("toDate", { length: 10 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SavedAuditFilter = typeof savedAuditFilters.$inferSelect;
