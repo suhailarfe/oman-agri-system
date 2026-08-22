@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   Bookmark,
   BookmarkPlus,
   Calendar,
@@ -8,6 +10,7 @@ import {
   Clock,
   Download,
   LoaderCircle,
+  Pencil,
   Save,
   Trash2,
   TrendingUp,
@@ -36,6 +39,8 @@ const statusClasses: Record<string, string> = {
 
 function SavedAuditFilterPanel({ filters, onSelect }: { filters: AuditFilters; onSelect: (filters: AuditFilters) => void }) {
   const [name, setName] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
   const utils = trpc.useUtils();
   const savedFiltersQuery = trpc.program.roadmap.savedFilters.list.useQuery();
   const createFilter = trpc.program.roadmap.savedFilters.create.useMutation({
@@ -47,6 +52,15 @@ function SavedAuditFilterPanel({ filters, onSelect }: { filters: AuditFilters; o
   const deleteFilter = trpc.program.roadmap.savedFilters.delete.useMutation({
     onSuccess: () => utils.program.roadmap.savedFilters.list.invalidate(),
   });
+  const renameFilter = trpc.program.roadmap.savedFilters.rename.useMutation({
+    onSuccess: () => {
+      setEditingId(null);
+      utils.program.roadmap.savedFilters.list.invalidate();
+    },
+  });
+  const reorderFilters = trpc.program.roadmap.savedFilters.reorder.useMutation({
+    onSuccess: () => utils.program.roadmap.savedFilters.list.invalidate(),
+  });
 
   const saveCurrentFilter = () => {
     if (name.trim().length < 2) return;
@@ -56,6 +70,16 @@ function SavedAuditFilterPanel({ filters, onSelect }: { filters: AuditFilters; o
       fromDate: filters.fromDate || undefined,
       toDate: filters.toDate || undefined,
     });
+  };
+
+  const moveFilter = (id: number, direction: -1 | 1) => {
+    const ordered = savedFiltersQuery.data ?? [];
+    const index = ordered.findIndex((filter) => filter.id === id);
+    const nextIndex = index + direction;
+    if (index < 0 || nextIndex < 0 || nextIndex >= ordered.length) return;
+    const ids = ordered.map((filter) => filter.id);
+    [ids[index], ids[nextIndex]] = [ids[nextIndex], ids[index]];
+    reorderFilters.mutate({ ids });
   };
 
   return (
@@ -81,25 +105,15 @@ function SavedAuditFilterPanel({ filters, onSelect }: { filters: AuditFilters; o
         </button>
       </div>
       {savedFiltersQuery.data?.length === 0 && <p className="mt-3 text-xs text-muted">لم تُحفظ فلاتر بعد.</p>}
-      <div className="mt-3 flex flex-wrap gap-2">
-        {savedFiltersQuery.data?.map((filter) => (
-          <span key={filter.id} className="inline-flex items-center gap-1 rounded-lg border border-line bg-white p-1">
-            <button
-              type="button"
-              onClick={() => onSelect({ query: filter.query ?? "", fromDate: filter.fromDate ?? "", toDate: filter.toDate ?? "" })}
-              className="h-7 px-2 text-xs font-bold text-falaj hover:bg-falaj-soft"
-            >
-              {filter.name}
-            </button>
-            <button
-              type="button"
-              onClick={() => deleteFilter.mutate({ id: filter.id })}
-              aria-label={`حذف فلتر ${filter.name}`}
-              className="grid h-7 w-7 place-items-center text-muted hover:text-red-700"
-            >
-              <Trash2 size={13} />
-            </button>
-          </span>
+      <div className="mt-3 space-y-2">
+        {savedFiltersQuery.data?.map((filter, index) => (
+          <div key={filter.id} className="flex flex-wrap items-center gap-1 rounded-lg border border-line bg-white p-1">
+            {editingId === filter.id ? <><input value={editingName} onChange={(event) => setEditingName(event.target.value)} className="h-7 min-w-40 flex-1 rounded border border-line px-2 text-xs text-ink" /><button type="button" onClick={() => editingName.trim().length >= 2 && renameFilter.mutate({ id: filter.id, name: editingName.trim() })} className="h-7 px-2 text-xs font-bold text-falaj">حفظ</button></> : <button type="button" onClick={() => onSelect({ query: filter.query ?? "", fromDate: filter.fromDate ?? "", toDate: filter.toDate ?? "" })} className="h-7 flex-1 px-2 text-right text-xs font-bold text-falaj hover:bg-falaj-soft">{filter.name}</button>}
+            <button type="button" onClick={() => { setEditingId(filter.id); setEditingName(filter.name); }} aria-label={`تعديل اسم فلتر ${filter.name}`} className="grid h-7 w-7 place-items-center text-muted hover:text-falaj"><Pencil size={13} /></button>
+            <button type="button" onClick={() => moveFilter(filter.id, -1)} disabled={index === 0 || reorderFilters.isPending} aria-label={`نقل فلتر ${filter.name} للأعلى`} className="grid h-7 w-7 place-items-center text-muted hover:text-falaj disabled:opacity-30"><ArrowUp size={13} /></button>
+            <button type="button" onClick={() => moveFilter(filter.id, 1)} disabled={index === (savedFiltersQuery.data?.length ?? 0) - 1 || reorderFilters.isPending} aria-label={`نقل فلتر ${filter.name} للأسفل`} className="grid h-7 w-7 place-items-center text-muted hover:text-falaj disabled:opacity-30"><ArrowDown size={13} /></button>
+            <button type="button" onClick={() => deleteFilter.mutate({ id: filter.id })} aria-label={`حذف فلتر ${filter.name}`} className="grid h-7 w-7 place-items-center text-muted hover:text-red-700"><Trash2 size={13} /></button>
+          </div>
         ))}
       </div>
     </section>
@@ -159,6 +173,7 @@ export default function RoadmapPage() {
           </span>
         </a>
         <div className="flex items-center gap-3">
+          <a href="/weekly-summary" className="text-xs font-bold text-falaj hover:underline">ملخص الأسبوع</a>
           <NotificationCenter />
           <a href="/" className="flex items-center gap-1 text-xs font-bold text-falaj hover:underline">العودة للواجهة الرئيسية <ArrowRight size={14} /></a>
         </div>

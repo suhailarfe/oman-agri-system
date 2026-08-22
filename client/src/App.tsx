@@ -15,6 +15,7 @@ import FinancialFeasibilityPage from "./pages/FinancialFeasibilityPage";
 import AdminDocsPage from "./pages/AdminDocsPage";
 import RoadmapPage from "./pages/RoadmapPage";
 import NotificationSettingsPage from "./pages/NotificationSettingsPage";
+import WeeklySummaryPage from "./pages/WeeklySummaryPage";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path={"/admin/docs"} component={AdminDocsPage} />
       <Route path={"/roadmap"} component={RoadmapPage} />
       <Route path={"/settings/notifications"} component={NotificationSettingsPage} />
+      <Route path={"/weekly-summary"} component={WeeklySummaryPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -188,6 +188,7 @@ export const notificationPreferences = mysqlTable("notification_preferences", {
   userOpenId: varchar("userOpenId", { length: 64 }).notNull().unique(),
   draftNotificationsEnabled: int("draftNotificationsEnabled").default(1).notNull(),
   publishedNotificationsEnabled: int("publishedNotificationsEnabled").default(1).notNull(),
+  mutedUntil: timestamp("mutedUntil"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
@@ -200,6 +201,7 @@ export const savedAuditFilters = mysqlTable("saved_audit_filters", {
   query: varchar("query", { length: 160 }),
   fromDate: varchar("fromDate", { length: 10 }),
   toDate: varchar("toDate", { length: 10 }),
+  sortOrder: int("sortOrder").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

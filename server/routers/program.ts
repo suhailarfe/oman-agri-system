@@ -8,6 +8,7 @@ import {
   getDocumentVersion,
   getExportDocument,
   getNotificationPreferences,
+  getWeeklyProgramSummary,
   listAppNotifications,
   listCurrentDocuments,
   listDocumentHistory,
@@ -16,6 +17,8 @@ import {
   listSavedAuditFilters,
   markAllAppNotificationsRead,
   markAppNotificationRead,
+  renameSavedAuditFilter,
+  reorderSavedAuditFilters,
   saveNotificationPreferences,
   setRoadmapProgress,
 } from "../programData";
@@ -24,6 +27,7 @@ import { compareDocumentText } from "../documentDiff";
 export const programRouter = router({
   roadmap: router({
     list: publicProcedure.query(() => listRoadmapMilestones()),
+    weeklySummary: publicProcedure.query(() => getWeeklyProgramSummary()),
     auditHistory: adminProcedure
       .input(z.object({ query: z.string().trim().max(160).optional(), fromDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), toDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).optional())
       .query(({ input }) => listRoadmapProgressAudits(input)),
@@ -38,6 +42,12 @@ export const programRouter = router({
       delete: adminProcedure
         .input(z.object({ id: z.number().int().positive() }))
         .mutation(({ ctx, input }) => deleteSavedAuditFilter(input.id, ctx.user.openId)),
+      rename: adminProcedure
+        .input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(96) }))
+        .mutation(({ ctx, input }) => renameSavedAuditFilter(input.id, input.name, ctx.user.openId)),
+      reorder: adminProcedure
+        .input(z.object({ ids: z.array(z.number().int().positive()).min(1).max(100) }))
+        .mutation(({ ctx, input }) => reorderSavedAuditFilters(input.ids, ctx.user.openId)),
     }),
   }),
   documents: router({
@@ -90,7 +100,7 @@ export const programRouter = router({
     markAllRead: protectedProcedure.mutation(({ ctx }) => markAllAppNotificationsRead(ctx.user.openId)),
     preferences: protectedProcedure.query(({ ctx }) => getNotificationPreferences(ctx.user.openId)),
     updatePreferences: protectedProcedure
-      .input(z.object({ draftNotificationsEnabled: z.boolean(), publishedNotificationsEnabled: z.boolean() }))
+      .input(z.object({ draftNotificationsEnabled: z.boolean(), publishedNotificationsEnabled: z.boolean(), mutedUntil: z.number().int().positive().nullable() }))
       .mutation(({ ctx, input }) => saveNotificationPreferences({ ...input, userOpenId: ctx.user.openId })),
   }),
 });

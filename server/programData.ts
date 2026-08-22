@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { createRoleAwareExport } from "./documentAccess";
 import { buildRoadmapProgressAudit } from "./roadmapAudit";
 import { buildVersionApproval } from "./versionApproval";
+import { isNotificationsMuted } from "./notificationPreferences";
 
 const roadmapSeed = [
   {
@@ -221,6 +222,7 @@ async function createRoleNotification(input: {
   const eligibleRecipients = recipients.filter((recipient) => {
     const preference = preferencesByUser.get(recipient.openId);
     if (!preference) return true;
+    if (isNotificationsMuted(preference.mutedUntil)) return false;
     if (input.type === "draft") return preference.draftNotificationsEnabled === 1;
     if (input.type === "published") return preference.publishedNotificationsEnabled === 1;
     return true;
@@ -232,15 +234,16 @@ async function createRoleNotification(input: {
 export async function getNotificationPreferences(userOpenId: string) {
   const db = await requireDb();
   const rows = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userOpenId, userOpenId)).limit(1);
-  return rows[0] ?? { userOpenId, draftNotificationsEnabled: 1, publishedNotificationsEnabled: 1 };
+  return rows[0] ?? { userOpenId, draftNotificationsEnabled: 1, publishedNotificationsEnabled: 1, mutedUntil: null };
 }
 
-export async function saveNotificationPreferences(input: { userOpenId: string; draftNotificationsEnabled: boolean; publishedNotificationsEnabled: boolean }) {
+export async function saveNotificationPreferences(input: { userOpenId: string; draftNotificationsEnabled: boolean; publishedNotificationsEnabled: boolean; mutedUntil: number | null }) {
   const db = await requireDb();
+  const mutedUntil = input.mutedUntil ? new Date(input.mutedUntil) : null;
   await db
     .insert(notificationPreferences)
-    .values({ userOpenId: input.userOpenId, draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0 })
-    .onDuplicateKeyUpdate({ set: { draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0 } });
+    .values({ userOpenId: input.userOpenId, draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0, mutedUntil })
+    .onDuplicateKeyUpdate({ set: { draftNotificationsEnabled: input.draftNotificationsEnabled ? 1 : 0, publishedNotificationsEnabled: input.publishedNotificationsEnabled ? 1 : 0, mutedUntil } });
   return getNotificationPreferences(input.userOpenId);
 }
 
@@ -271,12 +274,14 @@ export async function markAllAppNotificationsRead(openId: string) {
 
 export async function listSavedAuditFilters(userOpenId: string) {
   const db = await requireDb();
-  return db.select().from(savedAuditFilters).where(eq(savedAuditFilters.userOpenId, userOpenId)).orderBy(desc(savedAuditFilters.createdAt));
+  return db.select().from(savedAuditFilters).where(eq(savedAuditFilters.userOpenId, userOpenId)).orderBy(asc(savedAuditFilters.sortOrder), desc(savedAuditFilters.createdAt));
 }
 
 export async function createSavedAuditFilter(input: { userOpenId: string; name: string; query?: string; fromDate?: string; toDate?: string }) {
   const db = await requireDb();
-  await db.insert(savedAuditFilters).values(input);
+  const current = await listSavedAuditFilters(input.userOpenId);
+  const sortOrder = current.reduce((highest, filter) => Math.max(highest, filter.sortOrder), 0) + 1;
+  await db.insert(savedAuditFilters).values({ ...input, sortOrder });
   return listSavedAuditFilters(input.userOpenId);
 }
 
@@ -286,6 +291,42 @@ export async function deleteSavedAuditFilter(id: number, userOpenId: string) {
   if (!rows[0] || rows[0].userOpenId !== userOpenId) throw new Error("الفِلتر المطلوب غير متاح لهذا الحساب.");
   await db.delete(savedAuditFilters).where(eq(savedAuditFilters.id, id));
   return listSavedAuditFilters(userOpenId);
+}
+
+export async function renameSavedAuditFilter(id: number, name: string, userOpenId: string) {
+  const db = await requireDb();
+  const rows = await db.select().from(savedAuditFilters).where(eq(savedAuditFilters.id, id)).limit(1);
+  if (!rows[0] || rows[0].userOpenId !== userOpenId) throw new Error("الفِلتر المطلوب غير متاح لهذا الحساب.");
+  await db.update(savedAuditFilters).set({ name }).where(eq(savedAuditFilters.id, id));
+  return listSavedAuditFilters(userOpenId);
+}
+
+export async function reorderSavedAuditFilters(ids: number[], userOpenId: string) {
+  const db = await requireDb();
+  const existing = await listSavedAuditFilters(userOpenId);
+  const existingIds = new Set(existing.map((filter) => filter.id));
+  if (ids.length !== existing.length || ids.some((id) => !existingIds.has(id))) throw new Error("ترتيب الفلاتر لا يطابق الفلاتر المتاحة لهذا الحساب.");
+  for (let index = 0; index < ids.length; index += 1) {
+    await db.update(savedAuditFilters).set({ sortOrder: index + 1 }).where(eq(savedAuditFilters.id, ids[index]));
+  }
+  return listSavedAuditFilters(userOpenId);
+}
+
+export async function getWeeklyProgramSummary() {
+  await ensureProgramReferenceData();
+  const db = await requireDb();
+  const weekEnd = new Date();
+  const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const [auditRows, versionRows] = await Promise.all([
+    db.select({ id: roadmapProgressAudits.id, title: roadmapMilestones.title, previousProgressPercent: roadmapProgressAudits.previousProgressPercent, nextProgressPercent: roadmapProgressAudits.nextProgressPercent, reason: roadmapProgressAudits.reason, changedAt: roadmapProgressAudits.changedAt }).from(roadmapProgressAudits).innerJoin(roadmapMilestones, eq(roadmapProgressAudits.milestoneCode, roadmapMilestones.code)).orderBy(desc(roadmapProgressAudits.changedAt)).limit(100),
+    db.select().from(mvpDocumentVersions).orderBy(desc(mvpDocumentVersions.createdAt)).limit(100),
+  ]);
+  return {
+    weekStart,
+    weekEnd,
+    progressUpdates: auditRows.filter((row) => row.changedAt.getTime() >= weekStart.getTime()),
+    publishedVersions: versionRows.filter((row) => row.accessLevel === "investor" && row.publicationState === "approved" && (row.approvedAt ?? row.createdAt).getTime() >= weekStart.getTime()).map((row) => ({ id: row.id, title: row.title, versionTag: row.versionTag, summary: row.summary, publishedAt: row.approvedAt ?? row.createdAt })),
+  };
 }
 
 export async function listCurrentDocuments(role: "admin" | "user") {
