@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getDb } from "./db";
 import { financialFeasibility, emailAlertLogs, investorBookmarks, partnershipContracts } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import { programRouter } from "./routers/program";
 
 // بيانات مناطق واحات ومزارع عُمان 2040 الافتراضية والنشطة
 const activeRegions = [
@@ -92,6 +93,7 @@ const defaultFinancialRows = [
 
 export const appRouter = router({
   system: systemRouter,
+  program: programRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

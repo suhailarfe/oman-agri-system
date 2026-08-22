@@ -117,3 +117,37 @@ export const partnershipContracts = mysqlTable("partnership_contracts", {
 
 export type PartnershipContract = typeof partnershipContracts.$inferSelect;
 export type InsertPartnershipContract = typeof partnershipContracts.$inferInsert;
+
+export const roadmapMilestones = mysqlTable("roadmap_milestones", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 64 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  timeframe: varchar("timeframe", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["complete", "active", "planned", "future"]).notNull(),
+  description: text("description").notNull(),
+  progressPercent: int("progressPercent").notNull(),
+  sortOrder: int("sortOrder").notNull(),
+  investorVisible: int("investorVisible").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type RoadmapMilestone = typeof roadmapMilestones.$inferSelect;
+export type InsertRoadmapMilestone = typeof roadmapMilestones.$inferInsert;
+
+export const mvpDocumentVersions = mysqlTable("mvp_document_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  documentKey: varchar("documentKey", { length: 96 }).notNull(),
+  versionTag: varchar("versionTag", { length: 32 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: varchar("category", { length: 64 }).notNull(),
+  status: varchar("status", { length: 96 }).notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  changeSummary: text("changeSummary").notNull(),
+  accessLevel: mysqlEnum("accessLevel", ["investor", "admin"]).default("investor").notNull(),
+  createdByOpenId: varchar("createdByOpenId", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MvpDocumentVersion = typeof mvpDocumentVersions.$inferSelect;
+export type InsertMvpDocumentVersion = typeof mvpDocumentVersions.$inferInsert;
