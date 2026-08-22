@@ -12,6 +12,8 @@ import Home from "./pages/Home";
 import RegionPage from "./pages/RegionPage";
 import SystemArchitecturePage from "./pages/SystemArchitecturePage";
 import FinancialFeasibilityPage from "./pages/FinancialFeasibilityPage";
+import AdminDocsPage from "./pages/AdminDocsPage";
+import RoadmapPage from "./pages/RoadmapPage";
 
 function Router() {
   return (
@@ -20,6 +22,8 @@ function Router() {
       <Route path={"/region/:code"} component={RegionPage} />
       <Route path={"/architecture"} component={SystemArchitecturePage} />
       <Route path={"/feasibility"} component={FinancialFeasibilityPage} />
+      <Route path={"/admin/docs"} component={AdminDocsPage} />
+      <Route path={"/roadmap"} component={RoadmapPage} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

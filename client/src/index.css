@@ -18,6 +18,17 @@
   --dark: #11221b;
 }
 
+@theme inline {
+  --color-falaj: var(--falaj);
+  --color-falaj-deep: var(--falaj-deep);
+  --color-falaj-soft: var(--falaj-soft);
+  --color-paper: var(--paper);
+  --color-copper: var(--copper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; background: var(--paper); }
 body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans Arabic", sans-serif; -webkit-font-smoothing: antialiased; }

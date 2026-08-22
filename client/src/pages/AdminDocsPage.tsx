@@ -1,12 +1,15 @@
 /*
  * صفحة وثائق المشرفين: عرض وقراءة مواصفات وسجلات MVP المدمجة مع محرك بحث وتصفية متقدم.
  */
-import { useState } from "react";
-import { Search, FileText, CheckCircle2, ShieldCheck, ArrowRight, BookOpen, Filter, Download } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Search, FileText, CheckCircle2, ArrowRight, BookOpen, Filter, Download } from "lucide-react";
+import { getSearchSegments } from "@/lib/documentSearch";
 
 export default function AdminDocsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
 
   const documentsList = [
     {
@@ -57,6 +60,107 @@ export default function AdminDocsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  const highlightSearchTerm = (value: string): ReactNode => {
+    return getSearchSegments(value, searchTerm).map((segment, index) =>
+      segment.isMatch ? (
+        <mark key={`${segment.text}-${index}`} className="rounded-sm bg-amber-200 px-0.5 text-ink">
+          {segment.text}
+        </mark>
+      ) : (
+        <span key={`${segment.text}-${index}`}>{segment.text}</span>
+      )
+    );
+  };
+
+  const downloadMvpPdf = async () => {
+    const mvpSpec = documentsList.find((doc) => doc.id === "doc-1");
+    if (!mvpSpec) return;
+
+    setIsExporting(true);
+    setExportMessage("");
+
+    const exportDate = new Intl.DateTimeFormat("ar-OM", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(new Date());
+
+    const printableDocument = document.createElement("article");
+    printableDocument.dir = "rtl";
+    printableDocument.style.cssText = [
+      "position:fixed",
+      "right:-10000px",
+      "top:0",
+      "width:760px",
+      "padding:48px",
+      "background:#fffdf7",
+      "color:#163d30",
+      "font-family:Arial, sans-serif",
+      "line-height:1.9",
+      "box-sizing:border-box",
+    ].join(";");
+    printableDocument.innerHTML = `
+      <header style="border-bottom:2px solid #1f5a45;padding-bottom:20px;margin-bottom:28px;">
+        <div style="font-size:14px;color:#b97a4c;font-weight:700;">واحات ومزارع عُمان | رؤية 2040</div>
+        <h1 style="font-size:28px;margin:8px 0;color:#163d30;">${mvpSpec.title}</h1>
+        <p style="margin:0;font-size:13px;color:#5f6a63;">تاريخ التصدير: ${exportDate} | الإصدار: ${mvpSpec.version}</p>
+      </header>
+      <section style="background:#edf5ef;border:1px solid #cfe0d3;padding:18px 20px;margin-bottom:20px;">
+        <h2 style="font-size:17px;margin:0 0 8px;color:#163d30;">ملخص المواصفات</h2>
+        <p style="margin:0;font-size:14px;">${mvpSpec.summary}</p>
+      </section>
+      <section>
+        <h2 style="font-size:17px;margin:0 0 8px;color:#163d30;">نطاق البيانات</h2>
+        <p style="margin:0;font-size:14px;">${mvpSpec.content}</p>
+      </section>
+      <footer style="border-top:1px solid #d8ded9;padding-top:16px;margin-top:28px;font-size:12px;color:#5f6a63;">
+        نسخة مرجعية صادرة من مستودع وثائق المشرفين في منصة واحات ومزارع عُمان 2040.
+      </footer>
+    `;
+
+    document.body.appendChild(printableDocument);
+
+    try {
+      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+      const canvas = await html2canvas(printableDocument, {
+        backgroundColor: "#fffdf7",
+        scale: 2,
+        useCORS: true,
+      });
+      const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+      const margin = 10;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imageWidth = pageWidth - margin * 2;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+      const pageContentHeight = pageHeight - margin * 2;
+      const imageData = canvas.toDataURL("image/png");
+
+      let remainingHeight = imageHeight;
+      let yOffset = margin;
+      pdf.addImage(imageData, "PNG", margin, yOffset, imageWidth, imageHeight);
+      remainingHeight -= pageContentHeight;
+
+      while (remainingHeight > 0) {
+        yOffset = margin - (imageHeight - remainingHeight);
+        pdf.addPage();
+        pdf.addImage(imageData, "PNG", margin, yOffset, imageWidth, imageHeight);
+        remainingHeight -= pageContentHeight;
+      }
+
+      pdf.save("oman-agri-mvp-specification.pdf");
+      setExportMessage("تم تنزيل مواصفات MVP بصيغة PDF بنجاح.");
+    } catch {
+      setExportMessage("تعذر إنشاء ملف PDF. يرجى المحاولة مرة أخرى.");
+    } finally {
+      document.body.removeChild(printableDocument);
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="site-shell bg-paper min-h-screen text-ink" dir="rtl">
       <header className="site-header site-header--scrolled bg-white/90 backdrop-blur-md border-b border-line px-8 py-4 flex justify-between items-center">
@@ -67,8 +171,8 @@ export default function AdminDocsPage() {
           </span>
         </a>
         <div className="flex items-center gap-4">
-          <a href="/admin" className="text-xs font-bold text-falaj hover:underline flex items-center gap-1">
-            لوحة تحكم المشرفين <ArrowRight size={14} />
+          <a href="/" className="text-xs font-bold text-falaj hover:underline flex items-center gap-1">
+            العودة للواجهة الرئيسية <ArrowRight size={14} />
           </a>
         </div>
       </header>
@@ -131,6 +235,19 @@ export default function AdminDocsPage() {
               </button>
             </div>
           </div>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <p className="text-xs text-muted">تتضمن النسخة القابلة للتنزيل العنوان والإصدار وتاريخ التصدير وملخص نطاق البيانات.</p>
+            <button
+              type="button"
+              onClick={downloadMvpPdf}
+              disabled={isExporting}
+              className="h-10 shrink-0 rounded-xl bg-falaj px-4 text-xs font-bold text-white transition-colors hover:bg-falaj-deep disabled:cursor-wait disabled:opacity-70 inline-flex items-center gap-2"
+            >
+              <Download size={15} />
+              {isExporting ? "يجري إعداد ملف PDF" : "تنزيل مواصفات MVP بصيغة PDF"}
+            </button>
+          </div>
+          {exportMessage && <p role="status" className="mt-3 text-xs font-bold text-falaj">{exportMessage}</p>}
         </div>
 
         {/* شبكة عرض المستندات */}
@@ -146,21 +263,27 @@ export default function AdminDocsPage() {
                     <CheckCircle2 size={12} /> {doc.status}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-falaj-deep font-kufi mb-2">{doc.title}</h3>
-                <p className="text-xs text-muted mb-4 leading-relaxed">{doc.summary}</p>
+                <h3 className="text-lg font-bold text-falaj-deep font-kufi mb-2">{highlightSearchTerm(doc.title)}</h3>
+                <p className="text-xs text-muted mb-4 leading-relaxed">{highlightSearchTerm(doc.summary)}</p>
                 <div className="bg-paper p-4 rounded-xl border border-line text-xs text-ink leading-relaxed mb-4">
-                  {doc.content}
+                  {highlightSearchTerm(doc.content)}
                 </div>
               </div>
 
               <div className="pt-4 border-t border-line flex justify-between items-center">
                 <span className="text-[11px] text-muted">تاريخ الإصدار: {doc.date}</span>
-                <button 
-                  onClick={() => alert(`جاري تنزيل نسخة مرجعية من المستند: ${doc.title}`)}
-                  className="bg-falaj hover:bg-falaj-deep text-white px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all"
-                >
-                  <Download size={13} /> تحميل المستند
-                </button>
+                {doc.id === "doc-1" ? (
+                  <button
+                    type="button"
+                    onClick={downloadMvpPdf}
+                    disabled={isExporting}
+                    className="rounded-xl bg-falaj px-3.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-falaj-deep disabled:opacity-70 inline-flex items-center gap-1.5"
+                  >
+                    <Download size={13} /> تنزيل PDF
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-muted">المحتوى متاح للقراءة أعلاه</span>
+                )}
               </div>
             </div>
           ))}

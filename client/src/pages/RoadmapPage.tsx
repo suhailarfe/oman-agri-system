@@ -1,7 +1,7 @@
 /*
  * صفحة خارطة الطريق: جدول زمني تفاعلي يعرض مراحل التطور الاستراتيجي للمنصة والأمن الغذائي حتى 2040.
  */
-import { ArrowRight, Calendar, CheckCircle2, Clock, ShieldCheck, TrendingUp, Award, Layers } from "lucide-react";
+import { ArrowRight, Calendar, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 
 export default function RoadmapPage() {
   const roadmapMilestones = [
@@ -9,6 +9,7 @@ export default function RoadmapPage() {
       phase: "المرحلة الأولى: التأسيس والبنية التحتية",
       timeline: "الربع الأول - الربع الثاني 2026",
       status: "مكتمل",
+      progress: 100,
       description: "إطلاق النواة الأولى للمنصة، ربط قواعد البيانات الدائمة (MySQL)، إدراج خريطة المناطق الزراعية ومحطات الري الرئيسية.",
       keyDeliverables: ["ربط قاعدة البيانات الدائمة", "إطلاق الخريطة التفاعلية الإقليمية", "اعتماد الهوية المؤسسية (سجلّ الواحة المعاصر)"]
     },
@@ -16,6 +17,7 @@ export default function RoadmapPage() {
       phase: "المرحلة الثانية: حوسبة الاستثمار وعقود الشراكة الرقمية",
       timeline: "الربع الثالث - الربع الرابع 2026",
       status: "قيد التنفيذ النشط",
+      progress: 68,
       description: "تطوير لوحة تحكم المستثمرين، حاسبة العوائد المالية المتوقعة، إدخال التوقيع الرقمي المعتمد ورمز التحقق (QR Code).",
       keyDeliverables: ["لوحة تحكم المستثمرين وحاسبة العوائد", "نظام العقود الرقمية ورمز QR Code", "تصدير تقارير الجدوى بصيغة PDF و Excel"]
     },
@@ -23,6 +25,7 @@ export default function RoadmapPage() {
       phase: "المرحلة الثالثة: الربط الحي لحساسات الطقس والمياه",
       timeline: "2027 - 2030",
       status: "مخطط استراتيجي",
+      progress: 30,
       description: "توسيع شبكة الاستشعار الميداني لربط درجات الحرارة والرطوبة ومستويات الملوحة بالمنصة بشكل حي ولحظي.",
       keyDeliverables: ["ربط مباشر بمحطات الأرصاد العُمانية", "تنبيهات تلقائية عند تجاوز حدود الملوحة الآمنة", "عروض بانورامية ثلاثية الأبعاد لكل حقل"]
     },
@@ -30,6 +33,7 @@ export default function RoadmapPage() {
       phase: "المرحلة الرابعة: التكامل الشامل والوصول لاستهداف 2040",
       timeline: "2031 - 2040",
       status: "رؤية مستقبلية",
+      progress: 5,
       description: "تحقيق مستهدفات الاكتفاء الذاتي الاستراتيجي لسلطنة عُمان (80-90%+) وتوظيف الذكاء الاصطناعي الكامل في التنبؤ الزراعي.",
       keyDeliverables: ["الوصول لاكتفاء ذاتي استراتيجي بنسبة 90%+", "أتمتة كاملة لإدارة الآبار والري المحوري", "منصة تصدير وتسويق عالمية للمنتجات العُمانية"]
     }
@@ -84,6 +88,23 @@ export default function RoadmapPage() {
 
                 <h3 className="text-xl font-extrabold text-falaj-deep font-kufi mb-2">{item.phase}</h3>
                 <p className="text-xs text-muted mb-4 leading-relaxed">{item.description}</p>
+
+                <div className="mb-4 rounded-xl border border-line bg-paper p-4">
+                  <div className="mb-2 flex items-center justify-between gap-4 text-xs">
+                    <span className="font-bold text-falaj-deep">نسبة الإنجاز الحالية</span>
+                    <span className="font-mono font-bold text-falaj">{item.progress}%</span>
+                  </div>
+                  <div
+                    className="h-2.5 overflow-hidden rounded-full bg-stone-200"
+                    role="progressbar"
+                    aria-label={`نسبة إنجاز ${item.phase}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={item.progress}
+                  >
+                    <div className="h-full rounded-full bg-falaj transition-[width] duration-150 ease-out" style={{ width: `${item.progress}%` }} />
+                  </div>
+                </div>
 
                 <div className="bg-paper p-4 rounded-xl border border-line">
                   <span className="text-[11px] font-bold text-falaj-deep block mb-2">المنجزات والمستهدفات الرئيسية:</span>
