@@ -3,6 +3,7 @@
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { regionDetailHref } from "@/lib/regionLedger";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { sultanHaithamData, visionMarkData } from "@/attachedAssets";
@@ -206,6 +207,36 @@ export default function Home() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="claude-ledger-section page-pad" aria-labelledby="land-ledger-title">
+          <div className="claude-ledger-intro">
+            <div>
+              <SectionLabel number="01" dark>ملف الأرض</SectionLabel>
+              <h2 id="land-ledger-title">خريطة تبدأ<br /><span>من المكان.</span></h2>
+            </div>
+            <p>لكل منطقة قصتها ومحاصيلها وماؤها. هذه القراءة التحريرية تستخدم سجلات المناطق الحية نفسها، وتفتح الصفحة التفصيلية لكل فرصة دون تغيير مسارها.</p>
+          </div>
+          {regionsLoading ? (
+            <p className="claude-ledger-loading">يجري قراءة سجل المناطق.</p>
+          ) : (
+            <div className="claude-ledger-grid">
+              {filteredRegions?.map((reg) => (
+                <article key={`ledger-${reg.code}`} className="claude-ledger-card">
+                  <span className="claude-ledger-index">{reg.number}</span>
+                  <div>
+                    <h3>{reg.name}</h3>
+                    <p>{reg.description}</p>
+                  </div>
+                  <dl>
+                    <div><dt>المحاصيل</dt><dd>{reg.crop}</dd></div>
+                    <div><dt>الماء</dt><dd>{reg.water}</dd></div>
+                  </dl>
+                  <a href={regionDetailHref(reg.code)} className="claude-ledger-link">عرض ملف المنطقة</a>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* قسم الخريطة التفاعلية مع الفلاتر */}
