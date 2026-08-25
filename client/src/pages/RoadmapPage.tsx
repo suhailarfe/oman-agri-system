@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -124,15 +124,26 @@ export default function RoadmapPage() {
   const [draftProgress, setDraftProgress] = useState<Record<string, number>>({});
   const [draftReasons, setDraftReasons] = useState<Record<string, string>>({});
   const [auditFilters, setAuditFilters] = useState<AuditFilters>({ query: "", fromDate: "", toDate: "" });
+  const [appliedFilterName, setAppliedFilterName] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const utils = trpc.useUtils();
+  const requestedFilterId = useMemo(() => Number(new URLSearchParams(window.location.search).get("auditFilter")) || null, []);
+  const savedFiltersQuery = trpc.program.roadmap.savedFilters.list.useQuery(undefined, { enabled: isAdmin });
   const milestonesQuery = trpc.program.roadmap.list.useQuery();
   const auditInput = useMemo(
     () => ({ query: auditFilters.query.trim() || undefined, fromDate: auditFilters.fromDate || undefined, toDate: auditFilters.toDate || undefined }),
     [auditFilters]
   );
+
+  useEffect(() => {
+    if (!requestedFilterId || !savedFiltersQuery.data) return;
+    const selected = savedFiltersQuery.data.find((filter) => filter.id === requestedFilterId);
+    if (!selected) return;
+    setAuditFilters({ query: selected.query ?? "", fromDate: selected.fromDate ?? "", toDate: selected.toDate ?? "" });
+    setAppliedFilterName(selected.name);
+  }, [requestedFilterId, savedFiltersQuery.data]);
   const auditQuery = trpc.program.roadmap.auditHistory.useQuery(auditInput, { enabled: isAdmin });
   const updateProgress = trpc.program.roadmap.updateProgress.useMutation({
     onSuccess: async () => {
@@ -222,6 +233,7 @@ export default function RoadmapPage() {
 
         {isAdmin && <section className="mt-10 rounded-3xl border border-line bg-white p-6 md:p-8">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2 text-falaj"><ClipboardList size={20} /><h2 className="font-kufi text-xl font-bold">سجل تدقيق تقدم المراحل</h2></div><button type="button" onClick={exportAuditCsv} disabled={!auditQuery.data?.length} className="inline-flex h-9 items-center gap-1 rounded-lg border border-falaj px-3 text-xs font-bold text-falaj transition-colors hover:bg-falaj-soft disabled:opacity-50"><Download size={14} /> تصدير CSV</button></div>
+          {appliedFilterName && <p role="status" className="mb-3 rounded-lg border border-falaj/20 bg-falaj-soft px-3 py-2 text-xs font-bold text-falaj">تم تطبيق الفلتر المحفوظ: {appliedFilterName}</p>}
           <div className="grid gap-3 rounded-xl border border-line bg-paper p-4 md:grid-cols-[1fr_auto_auto_auto]">
             <input value={auditFilters.query} onChange={(event) => setAuditFilters((old) => ({ ...old, query: event.target.value }))} placeholder="ابحث باسم المشرف أو سبب التعديل" className="h-9 rounded-lg border border-line bg-white px-3 text-xs text-ink outline-none focus:border-falaj" />
             <label className="grid gap-1 text-[11px] font-bold text-falaj-deep">من تاريخ<input type="date" value={auditFilters.fromDate} onChange={(event) => setAuditFilters((old) => ({ ...old, fromDate: event.target.value }))} className="h-9 rounded-lg border border-line bg-white px-2 text-xs text-ink" /></label>

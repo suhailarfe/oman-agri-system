@@ -76,6 +76,7 @@ export default function Home() {
   const { data: regionsData, isLoading: regionsLoading } = trpc.agri.getRegions.useQuery();
   const { data: foodSecurityMetrics } = trpc.agri.getFoodSecurityMetrics.useQuery();
   const { data: currentUser } = trpc.auth.me.useQuery();
+  const savedAuditFiltersQuery = trpc.program.roadmap.savedFilters.list.useQuery(undefined, { enabled: currentUser?.role === "admin" });
 
   // نموذج تحديث المشرفين
   const [editRegionCode, setEditRegionCode] = useState("najd");
@@ -408,6 +409,12 @@ export default function Home() {
                 <button className="primary-button" onClick={() => startLogin()}>تسجيل الدخول كمشرف <UserCheck size={16} /></button>
               </div>
             ) : (
+              <>
+                <section className="mb-5 rounded-xl border border-line bg-paper p-4">
+                  <div className="mb-3 flex items-center gap-2 text-falaj"><Filter size={16} /><strong className="text-sm">وصول سريع لسجل التدقيق</strong></div>
+                  <p className="mb-3 text-xs leading-relaxed text-muted">طبّق أحد الفلاتر المحفوظة مباشرة لفتح سجل خارطة الطريق بالبحث والنطاق الزمني المحددين.</p>
+                  {savedAuditFiltersQuery.data?.length ? <div className="flex flex-wrap gap-2">{savedAuditFiltersQuery.data.map((filter) => <a key={filter.id} href={`/roadmap?auditFilter=${filter.id}`} className="inline-flex h-9 items-center rounded-lg border border-falaj px-3 text-xs font-bold text-falaj hover:bg-falaj-soft">{filter.name}</a>)}</div> : <p className="text-xs text-muted">لم تُحفظ فلاتر بعد. أنشئ فلترًا من سجل تدقيق خارطة الطريق ليظهر هنا.</p>}
+                </section>
               <form onSubmit={handleAdminUpdate} className="admin-form">
                 <h3>لوحة تعديل بيانات الواحات الزراعية (مشرف معتمد)</h3>
                 {updateMsg && <div className="update-alert">{updateMsg}</div>}
@@ -454,6 +461,7 @@ export default function Home() {
                   حفظ وتحديث البيانات فوراً في قاعدة البيانات
                 </button>
               </form>
+              </>
             )}
           </div>
         </section>
