@@ -42,6 +42,22 @@ export const waterSolutions = mysqlTable("water_solutions", {
 
 export type WaterSolution = typeof waterSolutions.$inferSelect;
 
+export const waterMeasurements = mysqlTable("water_measurements", {
+  id: int("id").autoincrement().primaryKey(),
+  regionCode: varchar("regionCode", { length: 32 }).notNull(),
+  sourceName: varchar("sourceName", { length: 160 }).notNull(),
+  sourceType: varchar("sourceType", { length: 96 }).notNull(),
+  ph: decimal("ph", { precision: 3, scale: 1 }).notNull(),
+  salinityPpm: int("salinityPpm").notNull(),
+  flowRate: varchar("flowRate", { length: 96 }).notNull(),
+  operationalStatus: varchar("operationalStatus", { length: 128 }).notNull(),
+  sampledAt: timestamp("sampledAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type WaterMeasurement = typeof waterMeasurements.$inferSelect;
+export type InsertWaterMeasurement = typeof waterMeasurements.$inferInsert;
+
 export const seedSources = mysqlTable("seed_sources", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),

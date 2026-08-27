@@ -64,6 +64,13 @@
       "when": 1787369684723,
       "tag": "0008_common_jackpot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1787874049418,
+      "tag": "0009_careful_vertigo",
+      "breakpoints": true
     }
   ]
 }

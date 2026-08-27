@@ -4,7 +4,10 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { regionDetailHref } from "@/lib/regionLedger";
+import { filterRegions } from "@/lib/regionFilters";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { RegionFilters } from "@/components/RegionFilters";
+import { RegionFilterResults } from "@/components/RegionFilterResults";
 import { startLogin } from "@/const";
 import { sultanHaithamData, visionMarkData } from "@/attachedAssets";
 import {
@@ -75,6 +78,7 @@ export default function Home() {
   // جلب البيانات
   const utils = trpc.useUtils();
   const { data: regionsData, isLoading: regionsLoading } = trpc.agri.getRegions.useQuery();
+  const { data: waterLedger, isLoading: waterLedgerLoading, isError: waterLedgerError } = trpc.agri.getWaterLedger.useQuery();
   const { data: foodSecurityMetrics } = trpc.agri.getFoodSecurityMetrics.useQuery();
   const { data: currentUser } = trpc.auth.me.useQuery();
   const savedAuditFiltersQuery = trpc.program.roadmap.savedFilters.list.useQuery(undefined, { enabled: currentUser?.role === "admin" });
@@ -128,11 +132,7 @@ export default function Home() {
     window.print();
   };
 
-  const filteredRegions = regionsData?.filter((reg) => {
-    if (filterRegion !== "all" && reg.code !== filterRegion) return false;
-    if (filterCropType !== "all" && !reg.crop.includes(filterCropType)) return false;
-    return true;
-  });
+  const filteredRegions = filterRegions(regionsData, filterRegion, filterCropType);
 
   return (
     <div className="site-shell" dir="rtl">
@@ -239,6 +239,49 @@ export default function Home() {
           )}
         </section>
 
+        <section className="water-ledger-section page-pad" aria-labelledby="water-ledger-title">
+          <div className="water-ledger-heading">
+            <div>
+              <SectionLabel number="02">ملف المياه</SectionLabel>
+              <h2 id="water-ledger-title">القراءة الأخيرة<br /><span>من مصادر الماء.</span></h2>
+            </div>
+            <p>يعرض السجل أحدث قياس محفوظ في قاعدة البيانات لكل منطقة. يوضح الرقم حالة الملوحة في المصدر، ويقود إلى ملف المنطقة الكامل لمراجعة تاريخ القياسات.</p>
+          </div>
+          {waterLedgerLoading ? (
+            <p className="water-ledger-state">يجري تحميل أحدث قياسات الآبار.</p>
+          ) : waterLedgerError ? (
+            <p className="water-ledger-state" role="alert">تعذر قراءة قياسات المياه حالياً. يرجى إعادة المحاولة لاحقاً.</p>
+          ) : !waterLedger?.length ? (
+            <p className="water-ledger-state">لا توجد قياسات آبار مسجلة حتى الآن.</p>
+          ) : (
+            <div className="water-ledger-grid">
+              {waterLedger.map((reading) => {
+                const region = regionsData?.find((item) => item.code === reading.regionCode);
+                const requiresAttention = reading.salinityPpm > 400;
+                return (
+                  <article key={reading.id} className={`water-ledger-card ${requiresAttention ? "water-ledger-card--alert" : ""}`}>
+                    <div className="water-ledger-card-top">
+                      <span>{region?.number ?? "—"}</span>
+                      <span className="water-ledger-status">{requiresAttention ? "يلزم فحص" : "ضمن الحد المرجعي"}</span>
+                    </div>
+                    <h3>{region?.name ?? reading.regionCode}</h3>
+                    <p>{reading.sourceName}</p>
+                    <dl>
+                      <div><dt>الملوحة</dt><dd>{reading.salinityPpm} جزء/مليون</dd></div>
+                      <div><dt>الرقم الهيدروجيني</dt><dd>{reading.ph}</dd></div>
+                      <div><dt>التدفق</dt><dd>{reading.flowRate}</dd></div>
+                    </dl>
+                    <div className="water-ledger-footer">
+                      <span>آخر تسجيل: {new Date(reading.sampledAt).toLocaleDateString("ar-OM")}</span>
+                      <a href={regionDetailHref(reading.regionCode)}>ملف المنطقة</a>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         {/* قسم الخريطة التفاعلية مع الفلاتر */}
         <section className="interactive-map-section page-pad" id="map-section">
           <div className="section-heading">
@@ -249,57 +292,17 @@ export default function Home() {
             <p>استخدم أدوات التصفية أدناه لاستعراض المناطق الواعدة وفقاً لمتطلبات الاستثمار أو نوع المحاصيل المستهدفة.</p>
           </div>
 
-          <div className="filter-toolbar">
-            <div className="filter-group">
-              <label><Filter size={15} /> تصفية حسب المنطقة:</label>
-              <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)}>
-                <option value="all">جميع المناطق (٥)</option>
-                <option value="najd">منطقة النجد — ظفار</option>
-                <option value="batinah">سهل الباطنة</option>
-                <option value="dhahirah">محافظة الظاهرة</option>
-                <option value="wusta">المنطقة الوسطى</option>
-                <option value="jabal">الجبل الأخضر</option>
-              </select>
-            </div>
-            <div className="filter-group">
-              <label><Sprout size={15} /> تصفية حسب المحصول:</label>
-              <select value={filterCropType} onChange={(e) => setFilterCropType(e.target.value)}>
-                <option value="all">جميع المحاصيل</option>
-                <option value="قمح">القمح الاستراتيجي</option>
-                <option value="نخيل">النخيل والتمور</option>
-                <option value="خضروات">الخضروات الطازجة</option>
-                <option value="رمان">الفواكه الجبلية</option>
-              </select>
-            </div>
-          </div>
+          <RegionFilters
+            region={filterRegion}
+            crop={filterCropType}
+            onRegionChange={setFilterRegion}
+            onCropChange={setFilterCropType}
+          />
 
           {regionsLoading ? (
             <div className="text-center py-12 text-muted">جاري تحميل الواحات...</div>
           ) : (
-            <div className="map-interactive-container">
-              <div className="map-visual-grid">
-                {filteredRegions?.map((reg) => (
-                  <div 
-                    key={reg.code} 
-                    className="map-pin-card"
-                    onClick={() => setSelectedRegion(reg)}
-                  >
-                    <div className="pin-card-header">
-                      <span className="pin-number">{reg.number}</span>
-                      <MapPin size={18} className="pin-icon" />
-                    </div>
-                    <h3>{reg.name}</h3>
-                    <p>{reg.area}</p>
-                    <div className="region-status-pill">{reg.status}</div>
-                    <div className="mt-2 text-xs text-muted">💧 نظام الري: <b>{reg.irrigationSystem}</b></div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-line">
-                      <button className="text-button text-falaj text-xs" onClick={(e) => { e.stopPropagation(); setSelectedRegion(reg); }}>نافذة سريعة</button>
-                      <a href={`/region/${reg.code}`} className="pin-action text-xs font-bold text-copper hover:underline">الصفحة المستقلة ←</a>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <RegionFilterResults regions={filteredRegions} onOpen={setSelectedRegion} />
           )}
         </section>
 
