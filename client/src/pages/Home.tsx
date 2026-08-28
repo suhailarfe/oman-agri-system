@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { regionDetailHref } from "@/lib/regionLedger";
 import { filterRegions } from "@/lib/regionFilters";
 import { filterWaterLedger, toWaterChartPoints, type WaterSalinityFilter, type WaterSort } from "@/lib/waterFilters";
+import { buildWaterLedgerCsv, buildWaterLedgerPrintHtml, type WaterExportRecord } from "@/lib/waterExport";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { RegionFilters } from "@/components/RegionFilters";
 import { RegionFilterResults } from "@/components/RegionFilterResults";
@@ -26,6 +27,7 @@ import {
   Settings,
   FileDown,
   Filter,
+  Download,
 } from "lucide-react";
 
 const assets = {
@@ -68,6 +70,12 @@ function SectionLabel({ number, children, dark = false }: { number: string; chil
   );
 }
 
+function WaterHistoryTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: { date: string; salinityPpm: number; sourceName: string; ph: string | number; flowRate: string; operationalStatus: string } }> }) {
+  const record = payload?.[0]?.payload;
+  if (!active || !record) return null;
+  return <aside className="water-history-tooltip"><strong>{record.date}</strong><dl><div><dt>الملوحة</dt><dd>{record.salinityPpm} جزء/مليون</dd></div><div><dt>المصدر</dt><dd>{record.sourceName}</dd></div><div><dt>الرقم الهيدروجيني</dt><dd>{record.ph}</dd></div><div><dt>التدفق</dt><dd>{record.flowRate}</dd></div><div><dt>التشغيل</dt><dd>{record.operationalStatus}</dd></div></dl></aside>;
+}
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState<any | null>(null);
@@ -79,6 +87,8 @@ export default function Home() {
   const [waterRegion, setWaterRegion] = useState("all");
   const [waterSalinityFilter, setWaterSalinityFilter] = useState<WaterSalinityFilter>("all");
   const [waterSort, setWaterSort] = useState<WaterSort>("latest");
+  const [waterExportMessage, setWaterExportMessage] = useState("");
+  const [waterPdfExporting, setWaterPdfExporting] = useState(false);
 
   // جلب البيانات
   const utils = trpc.useUtils();
@@ -148,6 +158,52 @@ export default function Home() {
     () => toWaterChartPoints(waterHistoryQuery.data, activeChartRegion),
     [waterHistoryQuery.data, activeChartRegion]
   );
+  const waterExportRecords = useMemo<WaterExportRecord[]>(() => filteredWaterLedger.map((reading) => ({
+    regionName: regionsData?.find((region) => region.code === reading.regionCode)?.name ?? reading.regionCode,
+    sourceName: reading.sourceName,
+    sourceType: reading.sourceType,
+    salinityPpm: reading.salinityPpm,
+    ph: reading.ph,
+    flowRate: reading.flowRate,
+    operationalStatus: reading.operationalStatus,
+    sampledAt: reading.sampledAt,
+  })), [filteredWaterLedger, regionsData]);
+  const downloadWaterCsv = () => {
+    const blob = new Blob([buildWaterLedgerCsv(waterExportRecords)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "oman-agri-water-ledger.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    setWaterExportMessage("تم تنزيل قراءات المياه المصفاة بصيغة CSV.");
+  };
+  const downloadWaterPdf = async () => {
+    if (!waterExportRecords.length) return;
+    setWaterPdfExporting(true);
+    setWaterExportMessage("");
+    try {
+      const printable = document.createElement("article");
+      printable.dir = "rtl";
+      printable.style.cssText = "position:fixed;right:-10000px;top:0;width:760px;padding:48px;background:#fffdf7;color:#163d30;font-family:Arial,sans-serif;line-height:1.9;box-sizing:border-box;";
+      printable.innerHTML = buildWaterLedgerPrintHtml(waterExportRecords, new Date());
+      document.body.appendChild(printable);
+      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([import("jspdf"), import("html2canvas")]);
+      const canvas = await html2canvas(printable, { backgroundColor: "#fffdf7", scale: 2, useCORS: true });
+      const pdf = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+      const margin = 10;
+      const width = pdf.internal.pageSize.getWidth() - margin * 2;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, margin, width, height);
+      pdf.save("oman-agri-water-ledger.pdf");
+      printable.remove();
+      setWaterExportMessage("تم تنزيل تقرير ملف المياه بصيغة PDF.");
+    } catch {
+      setWaterExportMessage("تعذر إنشاء ملف PDF. أعد المحاولة لاحقاً.");
+    } finally {
+      setWaterPdfExporting(false);
+    }
+  };
 
   return (
     <div className="site-shell" dir="rtl">
@@ -270,6 +326,7 @@ export default function Home() {
             <label htmlFor="water-salinity-filter">حالة الملوحة<select id="water-salinity-filter" value={waterSalinityFilter} onChange={(event) => setWaterSalinityFilter(event.target.value as WaterSalinityFilter)}><option value="all">كل الحالات</option><option value="within-limit">ضمن الحد المرجعي</option><option value="requires-review">يلزم فحص</option></select></label>
             <label htmlFor="water-sort">ترتيب القراءات<select id="water-sort" value={waterSort} onChange={(event) => setWaterSort(event.target.value as WaterSort)}><option value="latest">الأحدث أولاً</option><option value="salinity-desc">الملوحة الأعلى</option><option value="salinity-asc">الملوحة الأقل</option></select></label>
           </div>
+          <div className="water-ledger-export" aria-label="تصدير ملف المياه"><button type="button" onClick={downloadWaterCsv} disabled={!waterExportRecords.length} className="water-ledger-export-button"><Download size={15} /> تصدير CSV</button><button type="button" onClick={downloadWaterPdf} disabled={!waterExportRecords.length || waterPdfExporting} className="water-ledger-export-button water-ledger-export-button--primary"><FileDown size={15} /> {waterPdfExporting ? "يجري إعداد PDF" : "تصدير PDF"}</button>{waterExportMessage && <p role="status">{waterExportMessage}</p>}</div>
           {waterLedgerLoading ? (
             <p className="water-ledger-state">يجري تحميل أحدث قياسات الآبار.</p>
           ) : waterLedgerError ? (
@@ -305,7 +362,7 @@ export default function Home() {
           )}
           <section className="water-history-chart" aria-labelledby="water-history-title">
             <div><p className="section-label"><span>03</span><i /><span>السجل الزمني</span></p><h3 id="water-history-title">تغير الملوحة في {regionsData?.find((region) => region.code === activeChartRegion)?.name ?? activeChartRegion}</h3><p>الخط النحاسي يمثل حد المراجعة البالغ 400 جزء/مليون.</p></div>
-            {waterHistoryQuery.isLoading ? <p className="water-ledger-state">يجري تحميل السجل التاريخي.</p> : waterHistoryQuery.error ? <p role="alert" className="water-ledger-state">تعذر تحميل السجل التاريخي للملوحة.</p> : waterChartPoints.length ? <div className="water-chart-frame"><ResponsiveContainer width="100%" height={240}><LineChart data={waterChartPoints} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}><XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} /><YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} width={42} /><Tooltip formatter={(value) => [`${value} جزء/مليون`, "الملوحة"]} labelFormatter={(label) => `الفترة: ${label}`} contentStyle={{ border: "1px solid #d8dfd7", borderRadius: "12px", boxShadow: "none", fontFamily: "IBM Plex Sans Arabic, sans-serif", fontSize: "12px" }} /><ReferenceLine y={400} stroke="#b97a4c" strokeDasharray="4 4" /><Line type="monotone" dataKey="salinityPpm" stroke="#1f5a45" strokeWidth={2} dot={{ r: 3, fill: "#1f5a45" }} activeDot={{ r: 4 }} /></LineChart></ResponsiveContainer></div> : <p className="water-ledger-state">لا توجد قراءات تاريخية معتمدة لهذه المنطقة.</p>}
+            {waterHistoryQuery.isLoading ? <p className="water-ledger-state">يجري تحميل السجل التاريخي.</p> : waterHistoryQuery.error ? <p role="alert" className="water-ledger-state">تعذر تحميل السجل التاريخي للملوحة.</p> : waterChartPoints.length ? <div className="water-chart-frame"><ResponsiveContainer width="100%" height={240}><LineChart data={waterChartPoints} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}><XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} /><YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} width={42} /><Tooltip content={<WaterHistoryTooltip />} cursor={{ stroke: "#b97a4c", strokeWidth: 1 }} /><ReferenceLine y={400} stroke="#b97a4c" strokeDasharray="4 4" /><Line type="monotone" dataKey="salinityPpm" stroke="#1f5a45" strokeWidth={2} dot={{ r: 3, fill: "#1f5a45" }} activeDot={{ r: 4 }} /></LineChart></ResponsiveContainer></div> : <p className="water-ledger-state">لا توجد قراءات تاريخية معتمدة لهذه المنطقة.</p>}
           </section>
         </section>
 

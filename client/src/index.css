@@ -125,6 +125,14 @@ button { border: 0; }
 .water-ledger-tools label { display: grid; gap: .4rem; color: var(--falaj-deep); font-size: .72rem; font-weight: 700; }
 .water-ledger-tools select { height: 2.5rem; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); padding: 0 .75rem; color: var(--ink); font: inherit; }
 .water-ledger-tools select:focus-visible { outline: 2px solid var(--falaj); outline-offset: 2px; }
+.water-ledger-export { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: -.25rem 0 1.5rem; }
+.water-ledger-export-button { display: inline-flex; height: 2.5rem; align-items: center; gap: .45rem; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 0 .9rem; color: var(--falaj); font-size: .75rem; font-weight: 700; transition: background-color 150ms ease-out, border-color 150ms ease-out; }
+.water-ledger-export-button:hover:not(:disabled) { border-color: var(--falaj); background: var(--falaj-soft); }
+.water-ledger-export-button--primary { border-color: var(--falaj); background: var(--falaj); color: #fff; }
+.water-ledger-export-button--primary:hover:not(:disabled) { background: var(--falaj-deep); }
+.water-ledger-export-button:disabled { cursor: not-allowed; opacity: .55; }
+.water-ledger-export-button:focus-visible { outline: 2px solid var(--falaj); outline-offset: 2px; }
+.water-ledger-export p { margin: 0 .25rem 0 0; color: var(--falaj); font-size: .72rem; font-weight: 700; }
 .water-ledger-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .water-ledger-card { display: grid; gap: 1rem; min-width: 0; padding: 1.35rem; border: 1px solid var(--line); border-radius: 20px; background: #fff; }
 .water-ledger-card--alert { border-color: #c08332; }
@@ -146,6 +154,12 @@ button { border: 0; }
 .water-history-chart h3 { margin: 0; color: var(--falaj-deep); font-family: "Noto Kufi Arabic", sans-serif; font-size: 1.1rem; line-height: 1.75; }
 .water-history-chart p:not(.section-label) { margin: .75rem 0 0; color: var(--muted); font-size: .78rem; line-height: 1.75; }
 .water-chart-frame { min-width: 0; padding: 1rem; border: 1px solid var(--line); border-radius: 20px; background: #fff; }
+.water-history-tooltip { min-width: 185px; border: 1px solid var(--line); border-radius: 12px; background: #fffdf7; padding: .75rem; color: var(--ink); font-family: "IBM Plex Sans Arabic", sans-serif; font-size: .72rem; line-height: 1.65; }
+.water-history-tooltip strong { display: block; margin-bottom: .5rem; color: var(--falaj-deep); }
+.water-history-tooltip dl { display: grid; gap: .25rem; margin: 0; }
+.water-history-tooltip dl div { display: flex; justify-content: space-between; gap: .75rem; }
+.water-history-tooltip dt { color: var(--muted); }
+.water-history-tooltip dd { margin: 0; font-weight: 700; text-align: left; }
 @media (prefers-reduced-motion: reduce) { .claude-ledger-card { transition: none; } }
 @media (max-width: 1024px) { .claude-ledger-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1024px) { .water-ledger-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -16,5 +16,6 @@ describe("فلاتر ملف المياه", () => {
   it("يحصر السجل الزمني في المنطقة ويعيده بترتيب التاريخ", () => {
     const result = toWaterChartPoints(records, "najd");
     expect(result.map((record) => record.salinityPpm)).toEqual([318, 320]);
+    expect(result[0]).toMatchObject({ sourceName: "مصدر مياه مسجل", ph: "غير مسجل" });
   });
 });

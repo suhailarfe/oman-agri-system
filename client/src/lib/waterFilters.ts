@@ -2,6 +2,10 @@ export type WaterLedgerRecord = {
   regionCode: string;
   salinityPpm: number;
   sampledAt: Date | string;
+  sourceName?: string;
+  ph?: string | number;
+  flowRate?: string;
+  operationalStatus?: string;
 };
 
 export type WaterSalinityFilter = "all" | "within-limit" | "requires-review";
@@ -28,6 +32,10 @@ export function toWaterChartPoints(records: WaterLedgerRecord[] | undefined, reg
     .map((record) => ({
       date: new Intl.DateTimeFormat("ar-OM", { month: "short", year: "numeric" }).format(new Date(record.sampledAt)),
       salinityPpm: record.salinityPpm,
+      sourceName: record.sourceName ?? "مصدر مياه مسجل",
+      ph: record.ph ?? "غير مسجل",
+      flowRate: record.flowRate ?? "غير مسجل",
+      operationalStatus: record.operationalStatus ?? "غير مسجل",
       timestamp: new Date(record.sampledAt).getTime(),
     }))
     .sort((left, right) => left.timestamp - right.timestamp);
