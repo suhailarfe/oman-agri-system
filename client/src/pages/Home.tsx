@@ -11,6 +11,7 @@ import { buildWaterLedgerCsv, buildWaterLedgerPrintHtml, type WaterExportRecord 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { RegionFilters } from "@/components/RegionFilters";
 import { RegionFilterResults } from "@/components/RegionFilterResults";
+import { WaterHistoryTooltip } from "@/components/WaterHistoryTooltip";
 import { startLogin } from "@/const";
 import { sultanHaithamData, visionMarkData } from "@/attachedAssets";
 import {
@@ -68,12 +69,6 @@ function SectionLabel({ number, children, dark = false }: { number: string; chil
       <span>{children}</span>
     </div>
   );
-}
-
-function WaterHistoryTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload?: { date: string; salinityPpm: number; sourceName: string; ph: string | number; flowRate: string; operationalStatus: string } }> }) {
-  const record = payload?.[0]?.payload;
-  if (!active || !record) return null;
-  return <aside className="water-history-tooltip"><strong>{record.date}</strong><dl><div><dt>الملوحة</dt><dd>{record.salinityPpm} جزء/مليون</dd></div><div><dt>المصدر</dt><dd>{record.sourceName}</dd></div><div><dt>الرقم الهيدروجيني</dt><dd>{record.ph}</dd></div><div><dt>التدفق</dt><dd>{record.flowRate}</dd></div><div><dt>التشغيل</dt><dd>{record.operationalStatus}</dd></div></dl></aside>;
 }
 
 export default function Home() {

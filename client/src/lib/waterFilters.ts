@@ -31,6 +31,7 @@ export function toWaterChartPoints(records: WaterLedgerRecord[] | undefined, reg
     .filter((record) => record.regionCode === regionCode)
     .map((record) => ({
       date: new Intl.DateTimeFormat("ar-OM", { month: "short", year: "numeric" }).format(new Date(record.sampledAt)),
+      measuredAt: new Intl.DateTimeFormat("ar-OM", { dateStyle: "medium", timeStyle: "short" }).format(new Date(record.sampledAt)),
       salinityPpm: record.salinityPpm,
       sourceName: record.sourceName ?? "مصدر مياه مسجل",
       ph: record.ph ?? "غير مسجل",
