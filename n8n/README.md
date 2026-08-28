@@ -13,7 +13,7 @@
 انسخ المستودع من GitHub إلى الخادم الذي يعمل عليه التطبيق أو على خادم منفصل:
 
 ```bash
-git clone <PRIVATE_GITHUB_REPOSITORY_URL> oman-agri-vision-2040-v2
+git clone --branch manus-fullstack-water-governance https://github.com/suhailarfe/oman-agri-system.git oman-agri-vision-2040-v2
 cd oman-agri-vision-2040-v2
 pnpm install --frozen-lockfile
 cp n8n/environment.template.txt .env
