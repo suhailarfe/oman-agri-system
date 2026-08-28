@@ -1,10 +1,12 @@
 /*
  * Design system: سجلّ الواحة المعاصر + صورة السلطان في بطاقة 3D + شعار 2040 بجوار النص + الفلاتر ولوحة المشرفين والتصدير.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { trpc } from "@/lib/trpc";
 import { regionDetailHref } from "@/lib/regionLedger";
 import { filterRegions } from "@/lib/regionFilters";
+import { filterWaterLedger, toWaterChartPoints, type WaterSalinityFilter, type WaterSort } from "@/lib/waterFilters";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { RegionFilters } from "@/components/RegionFilters";
 import { RegionFilterResults } from "@/components/RegionFilterResults";
@@ -74,11 +76,15 @@ export default function Home() {
   // تصفية (فلاتر) الخريطة
   const [filterRegion, setFilterRegion] = useState("all");
   const [filterCropType, setFilterCropType] = useState("all");
+  const [waterRegion, setWaterRegion] = useState("all");
+  const [waterSalinityFilter, setWaterSalinityFilter] = useState<WaterSalinityFilter>("all");
+  const [waterSort, setWaterSort] = useState<WaterSort>("latest");
 
   // جلب البيانات
   const utils = trpc.useUtils();
   const { data: regionsData, isLoading: regionsLoading } = trpc.agri.getRegions.useQuery();
   const { data: waterLedger, isLoading: waterLedgerLoading, isError: waterLedgerError } = trpc.agri.getWaterLedger.useQuery();
+  const waterHistoryQuery = trpc.program.water.history.useQuery();
   const { data: foodSecurityMetrics } = trpc.agri.getFoodSecurityMetrics.useQuery();
   const { data: currentUser } = trpc.auth.me.useQuery();
   const savedAuditFiltersQuery = trpc.program.roadmap.savedFilters.list.useQuery(undefined, { enabled: currentUser?.role === "admin" });
@@ -133,6 +139,15 @@ export default function Home() {
   };
 
   const filteredRegions = filterRegions(regionsData, filterRegion, filterCropType);
+  const filteredWaterLedger = useMemo(
+    () => filterWaterLedger(waterLedger, waterRegion, waterSalinityFilter, waterSort),
+    [waterLedger, waterRegion, waterSalinityFilter, waterSort]
+  );
+  const activeChartRegion = waterRegion === "all" ? "najd" : waterRegion;
+  const waterChartPoints = useMemo(
+    () => toWaterChartPoints(waterHistoryQuery.data, activeChartRegion),
+    [waterHistoryQuery.data, activeChartRegion]
+  );
 
   return (
     <div className="site-shell" dir="rtl">
@@ -150,7 +165,10 @@ export default function Home() {
             <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}</a>
           ))}
           {currentUser ? (
-            <span className="user-badge-pill">👤 {currentUser.name || currentUser.email} ({currentUser.role})</span>
+            <>
+              {currentUser.role === "admin" && <a href="/admin/water">إدارة قراءات المياه</a>}
+              <span className="user-badge-pill"><UserCheck size={14} /> {currentUser.name || currentUser.email} ({currentUser.role})</span>
+            </>
           ) : (
             <button className="nav-contact" onClick={() => startLogin()}>تسجيل الدخول <UserCheck size={14} /></button>
           )}
@@ -247,15 +265,20 @@ export default function Home() {
             </div>
             <p>يعرض السجل أحدث قياس محفوظ في قاعدة البيانات لكل منطقة. يوضح الرقم حالة الملوحة في المصدر، ويقود إلى ملف المنطقة الكامل لمراجعة تاريخ القياسات.</p>
           </div>
+          <div className="water-ledger-tools" aria-label="فلاتر ملف المياه">
+            <label htmlFor="water-region-filter">المنطقة<select id="water-region-filter" value={waterRegion} onChange={(event) => setWaterRegion(event.target.value)}><option value="all">كل المناطق</option><option value="najd">النجد، ظفار</option><option value="batinah">سهل الباطنة</option><option value="dhahirah">محافظة الظاهرة</option><option value="wusta">المنطقة الوسطى</option><option value="jabal">الجبل الأخضر</option></select></label>
+            <label htmlFor="water-salinity-filter">حالة الملوحة<select id="water-salinity-filter" value={waterSalinityFilter} onChange={(event) => setWaterSalinityFilter(event.target.value as WaterSalinityFilter)}><option value="all">كل الحالات</option><option value="within-limit">ضمن الحد المرجعي</option><option value="requires-review">يلزم فحص</option></select></label>
+            <label htmlFor="water-sort">ترتيب القراءات<select id="water-sort" value={waterSort} onChange={(event) => setWaterSort(event.target.value as WaterSort)}><option value="latest">الأحدث أولاً</option><option value="salinity-desc">الملوحة الأعلى</option><option value="salinity-asc">الملوحة الأقل</option></select></label>
+          </div>
           {waterLedgerLoading ? (
             <p className="water-ledger-state">يجري تحميل أحدث قياسات الآبار.</p>
           ) : waterLedgerError ? (
             <p className="water-ledger-state" role="alert">تعذر قراءة قياسات المياه حالياً. يرجى إعادة المحاولة لاحقاً.</p>
-          ) : !waterLedger?.length ? (
-            <p className="water-ledger-state">لا توجد قياسات آبار مسجلة حتى الآن.</p>
+          ) : !filteredWaterLedger.length ? (
+            <p className="water-ledger-state" role="status">لا توجد قياسات تطابق فلاتر ملف المياه المحددة.</p>
           ) : (
             <div className="water-ledger-grid">
-              {waterLedger.map((reading) => {
+              {filteredWaterLedger.map((reading) => {
                 const region = regionsData?.find((item) => item.code === reading.regionCode);
                 const requiresAttention = reading.salinityPpm > 400;
                 return (
@@ -280,6 +303,10 @@ export default function Home() {
               })}
             </div>
           )}
+          <section className="water-history-chart" aria-labelledby="water-history-title">
+            <div><p className="section-label"><span>03</span><i /><span>السجل الزمني</span></p><h3 id="water-history-title">تغير الملوحة في {regionsData?.find((region) => region.code === activeChartRegion)?.name ?? activeChartRegion}</h3><p>الخط النحاسي يمثل حد المراجعة البالغ 400 جزء/مليون.</p></div>
+            {waterHistoryQuery.isLoading ? <p className="water-ledger-state">يجري تحميل السجل التاريخي.</p> : waterHistoryQuery.error ? <p role="alert" className="water-ledger-state">تعذر تحميل السجل التاريخي للملوحة.</p> : waterChartPoints.length ? <div className="water-chart-frame"><ResponsiveContainer width="100%" height={240}><LineChart data={waterChartPoints} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}><XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} /><YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: "#5f6a63" }} width={42} /><Tooltip formatter={(value) => [`${value} جزء/مليون`, "الملوحة"]} labelFormatter={(label) => `الفترة: ${label}`} contentStyle={{ border: "1px solid #d8dfd7", borderRadius: "12px", boxShadow: "none", fontFamily: "IBM Plex Sans Arabic, sans-serif", fontSize: "12px" }} /><ReferenceLine y={400} stroke="#b97a4c" strokeDasharray="4 4" /><Line type="monotone" dataKey="salinityPpm" stroke="#1f5a45" strokeWidth={2} dot={{ r: 3, fill: "#1f5a45" }} activeDot={{ r: 4 }} /></LineChart></ResponsiveContainer></div> : <p className="water-ledger-state">لا توجد قراءات تاريخية معتمدة لهذه المنطقة.</p>}
+          </section>
         </section>
 
         {/* قسم الخريطة التفاعلية مع الفلاتر */}

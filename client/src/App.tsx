@@ -16,6 +16,7 @@ import AdminDocsPage from "./pages/AdminDocsPage";
 import RoadmapPage from "./pages/RoadmapPage";
 import NotificationSettingsPage from "./pages/NotificationSettingsPage";
 import WeeklySummaryPage from "./pages/WeeklySummaryPage";
+import AdminWaterPage from "./pages/AdminWaterPage";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/architecture"} component={SystemArchitecturePage} />
       <Route path={"/feasibility"} component={FinancialFeasibilityPage} />
       <Route path={"/admin/docs"} component={AdminDocsPage} />
+      <Route path={"/admin/water"} component={AdminWaterPage} />
       <Route path={"/roadmap"} component={RoadmapPage} />
       <Route path={"/settings/notifications"} component={NotificationSettingsPage} />
       <Route path={"/weekly-summary"} component={WeeklySummaryPage} />

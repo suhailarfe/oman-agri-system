@@ -51,6 +51,11 @@ export const waterMeasurements = mysqlTable("water_measurements", {
   salinityPpm: int("salinityPpm").notNull(),
   flowRate: varchar("flowRate", { length: 96 }).notNull(),
   operationalStatus: varchar("operationalStatus", { length: 128 }).notNull(),
+  approvalStatus: mysqlEnum("approvalStatus", ["draft", "approved"]).default("approved").notNull(),
+  submittedByOpenId: varchar("submittedByOpenId", { length: 64 }),
+  approvedByOpenId: varchar("approvedByOpenId", { length: 64 }),
+  approvalNote: text("approvalNote"),
+  approvedAt: timestamp("approvedAt"),
   sampledAt: timestamp("sampledAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

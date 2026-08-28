@@ -23,6 +23,7 @@ import {
   setRoadmapProgress,
 } from "../programData";
 import { compareDocumentText } from "../documentDiff";
+import { approveWaterMeasurement, createWaterMeasurementDraft, listApprovedWaterHistory, listWaterMeasurementsForReview } from "../waterData";
 
 export const programRouter = router({
   roadmap: router({
@@ -91,6 +92,27 @@ export const programRouter = router({
     exportPayload: protectedProcedure
       .input(z.object({ documentKey: z.string().min(1) }))
       .mutation(({ ctx, input }) => getExportDocument(input.documentKey, ctx.user.role)),
+  }),
+  water: router({
+    history: publicProcedure
+      .input(z.object({ regionCode: z.string().trim().min(1).max(32).optional() }).optional())
+      .query(({ input }) => listApprovedWaterHistory(input?.regionCode)),
+    reviewQueue: adminProcedure.query(() => listWaterMeasurementsForReview()),
+    createDraft: adminProcedure
+      .input(z.object({
+        regionCode: z.enum(["najd", "batinah", "dhahirah", "wusta", "jabal"]),
+        sourceName: z.string().trim().min(3).max(160),
+        sourceType: z.string().trim().min(3).max(96),
+        ph: z.number().min(0).max(14),
+        salinityPpm: z.number().int().min(0).max(10000),
+        flowRate: z.string().trim().min(2).max(96),
+        operationalStatus: z.string().trim().min(3).max(128),
+        sampledAt: z.date(),
+      }))
+      .mutation(({ ctx, input }) => createWaterMeasurementDraft({ ...input, submittedByOpenId: ctx.user.openId })),
+    approve: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), approvalNote: z.string().trim().min(4).max(500) }))
+      .mutation(({ ctx, input }) => approveWaterMeasurement({ ...input, approvedByOpenId: ctx.user.openId })),
   }),
   notifications: router({
     list: protectedProcedure.query(({ ctx }) => listAppNotifications(ctx.user.openId)),

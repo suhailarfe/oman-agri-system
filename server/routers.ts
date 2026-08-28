@@ -4,9 +4,10 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { getDb } from "./db";
-import { financialFeasibility, emailAlertLogs, investorBookmarks, partnershipContracts, waterMeasurements } from "../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { financialFeasibility, emailAlertLogs, investorBookmarks, partnershipContracts } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { programRouter } from "./routers/program";
+import { listLatestApprovedWaterMeasurements } from "./waterData";
 
 // بيانات مناطق واحات ومزارع عُمان 2040 الافتراضية والنشطة
 const activeRegions = [
@@ -109,20 +110,7 @@ export const appRouter = router({
     }),
 
     getWaterLedger: publicProcedure.query(async () => {
-      const db = await getDb();
-      if (!db) return [];
-
-      const readings = await db
-        .select()
-        .from(waterMeasurements)
-        .orderBy(desc(waterMeasurements.sampledAt), desc(waterMeasurements.id));
-
-      const latestByRegion = new Set<string>();
-      return readings.filter((reading) => {
-        if (latestByRegion.has(reading.regionCode)) return false;
-        latestByRegion.add(reading.regionCode);
-        return true;
-      });
+      return listLatestApprovedWaterMeasurements();
     }),
 
     // استعراض وحفظ بيانات الجدوى المالية من قاعدة البيانات الدائمة
